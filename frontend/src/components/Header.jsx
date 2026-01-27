@@ -25,7 +25,7 @@ function Header () {
     };
 
     return (
-        <nav className="topnav">
+        <nav className={`topnav ${isDarkMode ? "dark-mode" : ""}`}>
             <div>
             <Link to={"/"}>Main Page</Link>
             <Link to={"/add-song"}>Upload Page</Link>

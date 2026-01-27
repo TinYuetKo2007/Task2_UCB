@@ -233,5 +233,14 @@ body.dark-mode {
 }
 .topnav.dark-mode {
   background-color: #79fd2c;
-  color: #ffffff
+}
+.topnav.dark-mode a {
+  color: #000000
+}
+
+.dark-mode .player-card {
+  background-color: #23334d;
+}
+body.form-container.dark-mode {
+  background-color: #522903;
 }

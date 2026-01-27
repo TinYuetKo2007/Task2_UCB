@@ -59,8 +59,16 @@ const AudioPlayer = ({ audioSrc, imageSrc }) => {
     };
   }, []);
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+    //  light or dark mode
+    const toggleTheme = () => {
+      setIsDarkMode(!isDarkMode);
+      document.body.classList.toggle("dark-mode", !isDarkMode);
+    };
+
   return (
-    <div className="player-card">
+    <div className={`player-card ${isDarkMode ? "dark-mode" : ""}`}>
       <img src={imageSrc} alt="Cover"/>
 
       <input
