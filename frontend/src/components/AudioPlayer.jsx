@@ -82,8 +82,8 @@ const AudioPlayer = ({ audioSrc, imageSrc }) => {
       <audio ref={audioRef} src={audioSrc} preload="metadata" />
 
       <div className="track-duration">
-        <p>{formatDuration(currentTime)}</p>
-        <p>{formatDuration(duration)}</p>
+        <p className={`${isDarkMode ? "dark-mode" : ""}`}>{formatDuration(currentTime)}</p>
+        <p className={`${isDarkMode ? "dark-mode" : ""}`}>{formatDuration(duration)}</p>
       </div>
 
       <button onClick={handlePlayPause}>

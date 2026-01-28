@@ -32,6 +32,7 @@ function App() {
       <Link to={"/products"}>Buy Ticket</Link>
       <AudioPlayer audioSrc={song} />
     </nav>
+    <p>"RZA has brought us many great memories I will always cherish!"</p>
     </div>
   )
 };

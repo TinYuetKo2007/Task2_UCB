@@ -237,10 +237,25 @@ body.dark-mode {
 .topnav.dark-mode a {
   color: #000000
 }
-
+.topnav.dark-mode button {
+  background-color: #79fd2c;
+  color: #000000;
+}
 .dark-mode .player-card {
   background-color: #23334d;
 }
-body.form-container.dark-mode {
+
+.dark-mode .track-duration p {
+  color: #ffffff;
+}
+.dark-mode .form-container {
   background-color: #522903;
+}
+
+.dark-mode .form-container .form button {
+  background-color: #ffd3a9;
+  color: #000000;
+}
+.dark-mode .material-symbols-rounded {
+  color:#000000
 }
