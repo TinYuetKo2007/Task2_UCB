@@ -18,6 +18,11 @@ body {
   margin: auto;
   overflow: hidden;
 }
+@media screen and (max-width: 800px) {
+  .container {
+    width: 100%; /* The width is 100%, when the viewport is 800px or smaller */
+  }
+}
 
 /*Form CSS */
 .form-container {
@@ -140,10 +145,7 @@ h1 {
   background-color: #ddd;
   color: black;
 }
-.topnav button:hover {
-  background-color: #ddd;
-  color: black;
-}
+
 .topnav a.active {
   background-color: #dfffc1;
   color: white;
@@ -225,37 +227,4 @@ input[type="range"] {
   border-color: #385511;
   border: 2px solid #385511;
   padding: 40px;
-}
-
-body.dark-mode {
-  background-color: #18181f;
-  color: #ffffff;
-}
-.topnav.dark-mode {
-  background-color: #79fd2c;
-}
-.topnav.dark-mode a {
-  color: #000000
-}
-.topnav.dark-mode button {
-  background-color: #79fd2c;
-  color: #000000;
-}
-.dark-mode .player-card {
-  background-color: #23334d;
-}
-
-.dark-mode .track-duration p {
-  color: #ffffff;
-}
-.dark-mode .form-container {
-  background-color: #522903;
-}
-
-.dark-mode .form-container .form button {
-  background-color: #ffd3a9;
-  color: #000000;
-}
-.dark-mode .material-symbols-rounded {
-  color:#000000
 }

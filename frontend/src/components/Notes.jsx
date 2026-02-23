@@ -41,7 +41,7 @@ export default function Notes() {
         <h1>Notes</h1>
       </div>
       <CreateNotes onSuccess={fetchNotes}/>
-      {notes.map((note, index) => (
+      {notes.map((note) => (
         <div key={note.id}>
           <h2>{note.title}</h2> <h3>{note.text}</h3>
         </div>

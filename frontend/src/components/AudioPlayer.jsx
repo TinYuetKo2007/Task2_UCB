@@ -59,16 +59,8 @@ const AudioPlayer = ({ audioSrc, imageSrc }) => {
     };
   }, []);
 
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-    //  light or dark mode
-    const toggleTheme = () => {
-      setIsDarkMode(!isDarkMode);
-      document.body.classList.toggle("dark-mode", !isDarkMode);
-    };
-
   return (
-    <div className={`player-card ${isDarkMode ? "dark-mode" : ""}`}>
+    <div className="player-card">
       <img src={imageSrc} alt="Cover"/>
 
       <input
@@ -82,8 +74,8 @@ const AudioPlayer = ({ audioSrc, imageSrc }) => {
       <audio ref={audioRef} src={audioSrc} preload="metadata" />
 
       <div className="track-duration">
-        <p className={`${isDarkMode ? "dark-mode" : ""}`}>{formatDuration(currentTime)}</p>
-        <p className={`${isDarkMode ? "dark-mode" : ""}`}>{formatDuration(duration)}</p>
+        <p>{formatDuration(currentTime)}</p>
+        <p>{formatDuration(duration)}</p>
       </div>
 
       <button onClick={handlePlayPause}>

@@ -13,9 +13,10 @@ import AboutUs from './components/AboutUs.jsx'
 import Products from './Products.jsx'
 import ProductPage from './components/ProductPage.jsx'
 import Notes from './components/Notes.jsx'
-
 // Links
 const Router = createBrowserRouter([
+
+
   {path: "/login", element: <Login/>},
   {path: "/signup", element: <SignUp/>},
     {
