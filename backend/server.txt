@@ -1,0 +1,123 @@
+// const env = require('dotenv/config');
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY; // Advanced JWT authentication
+// ENCRYPTED VERSION OF USERNAME
+
+const express = require("express");
+const cors = require("cors");
+const bcrypt = require("bcrypt");
+const bodyParser = require("body-parser");
+
+const usersDB = require("./usersDB");
+const songsDB = require("./songsDB");
+
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());
+
+app.get("/", (req, res) => res.send("Backend connected to two databases!"));
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",  // your frontend URL
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
+// --- Register user
+app.post("/signup", async (req, res) => {
+  const { username, email, password } = req.body;
+  console.log(username, email, password)
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    usersDB.run(
+      "INSERT INTO users (username, email, password) VALUES (?,?,?)",
+      [username, email, hash],
+      function (err) {
+        if (err) 
+          return res.status(400).json({ success: false, message: err.message });
+          res.json({ success: true, message: "User registered" });
+      }
+    );
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// LOGIN ROUTE
+app.post("/login", (req, res) => {
+  const { username, email, password } = req.body;
+  console.log(username, email, password)
+  usersDB.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, row) => {
+    if (err) return res.status(500).json({ success: false, message: err.message });
+    if (!row)
+      return res.status(401).json({ success: false, message: "User not found" });
+
+    // Compare passwords
+    const match = await bcrypt.compare(password, row.password);
+    if (match) {
+      res.json({ success: true, message: "Login successful", user: row.email });
+    } else {
+      res.status(401).json({ success: false, message: "Invalid password" });
+    }
+  });
+});
+
+
+// --- Add a new artist
+app.post("/artists", (req, res) => {
+  const { name } = req.body;
+  songsDB.run("INSERT INTO artists (name) VALUES (?)", [name], function (err) {
+    if (err) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.json({ success: true, id: this.lastID });
+  });
+});
+
+// --- Add a new song
+app.post("/songs", (req, res) => {
+  const { title, artist_id, genre, year } = req.body;
+  songsDB.run(
+    "INSERT INTO songs (title, artist_id, genre, year) VALUES (?, ?, ?, ?)",
+    [title, artist_id, genre, year],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ success: false, message: err.message });
+      }
+      res.json({ success: true, id: this.lastID });
+    }
+  );
+});
+
+// --- Get all songs
+app.get("/songs", (req, res) => {
+  const query = `
+    SELECT songs.id, songs.title, songs.genre, songs.year, artists.name AS artist
+    FROM songs
+    LEFT JOIN artists ON songs.artist_id = artists.id
+  `;
+  songsDB.all(query, [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+    res.json({ success: true, songs: rows });
+  });
+});
+
+// --- Search by artist name
+app.get("/songs/artist/:name", (req, res) => {
+  const { name } = req.params;
+  const query = `
+    SELECT songs.title, songs.genre, songs.year
+    FROM songs
+    JOIN artists ON songs.artist_id = artists.id
+    WHERE artists.name = ?
+  `;
+  songsDB.all(query, [name], (err, rows) => {
+    if (err) return res.status(500).json({ success: false, message: err.message });
+    res.json({ success: true, songs: rows });
+  });
+});
+
+app.listen(4000, () => console.log("🚀 Server running on http://localhost:4000"));

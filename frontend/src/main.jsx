@@ -8,15 +8,16 @@ import Login from './components/LogIn.jsx'
 import SignUp from './components/SignUp.jsx'
 import Profile from './components/Profile.jsx'
 import SongUploader from "./components/SongUploader.jsx"
-import List from './List.jsx'
 import AboutUs from './components/AboutUs.jsx'
 import Products from './Products.jsx'
 import ProductPage from './components/ProductPage.jsx'
 import Notes from './components/Notes.jsx'
+import AdminPage from './components/admin/AdminPage.jsx'
+import SongPage from './components/SongPage.jsx'
+import Songs from './components/Songs.jsx'
+
 // Links
 const Router = createBrowserRouter([
-
-
   {path: "/login", element: <Login/>},
   {path: "/signup", element: <SignUp/>},
     {
@@ -26,10 +27,15 @@ const Router = createBrowserRouter([
   {path: "/", element: <App/>},
   {path: "/profile", element: <Profile/>},
   {path: "/add-song", element: <SongUploader/>},
-  {path: "/list", element: <List/>},
   {path: "/contact", element: <Contact/>},
   {path: "/aboutus", element: <AboutUs/>},
+  {path: "/admin", element: <AdminPage/>},
   {path: "/notes", element: <Notes/>},
+  {path: "/songs", 
+    children: [
+    {index: true, element: <Songs/>},
+    {path: ":songId", element: <SongPage/>},
+  ]},
   {path: "/products",
   children: [
     {index: true, element: <Products/>},

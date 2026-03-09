@@ -4,7 +4,7 @@ import { useState } from "react"
 export default function CreateNotes({onSuccess}) {
     const [title, setTitle] = useState("")
     const [text, setText] = useState("")
-    const [message, setMessage] = useState("");
+    const [_, setMessage] = useState("");
 
  const handleSubmit = async (e) => {
         e.preventDefault();
@@ -27,7 +27,7 @@ export default function CreateNotes({onSuccess}) {
             } else {
                 setMessage(data.message || "Submission failed.");
             }
-        } catch (err) {
+        } catch {
             setMessage("Server error. Please try again later.");
         }
     };

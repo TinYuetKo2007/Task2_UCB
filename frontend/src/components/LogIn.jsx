@@ -8,7 +8,6 @@ function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
 
@@ -33,7 +32,7 @@ function Login() {
   };
 
     return (
-        <div className="container">
+        <div className="container" style={{ height: "95vh"}}>
             <div className="form-container">
                     <form className="form" onSubmit={handleLogin}>
                         <button onClick= {() => navigate("/")}>Go Back</button>

@@ -2,21 +2,7 @@ import { useState, useEffect } from "react";
 import Header from "./components/Header.jsx"
 import ProductDisplay from "./components/ProductDisplay.jsx";
 import { Link } from "react-router-dom"
-export const products = [
-    {
-        name: "Zoo Ticket",
-        priceId: "price_1SW0yGCZTWpALhZBIDwcknTN",
-        desc: "A zoo ticket for adults (18 or older)",
-        productId: "zoo",
-    },
-    {
-        name: "Hotel Booking 1 Night",
-        priceId: "price_1SW0z7CZTWpALhZBkD8FKV5z",
-        desc: "Book for a 1-night stay at our onsite hotel",
-        productId: "hotel",
-    },
-];
-
+import { products } from "./products.js";
 const Message = ({ message }) => (
   <section>
     <p>{message}</p>

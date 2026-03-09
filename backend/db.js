@@ -35,7 +35,8 @@ appDB.serialize(() => {
         CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
-        password TEXT
+        password TEXT,
+        role TEXT
         )
     `);
     appDB.run(`
@@ -52,6 +53,7 @@ appDB.serialize(() => {
         artist_id INTEGER,
         genre TEXT,
         year INTEGER,
+        cover_image TEXT,
         FOREIGN KEY (artist_id) REFERENCES artists(id)
       )
   `);

@@ -1,20 +1,5 @@
 {
-    "name": "notes-tracker",
-    "version": "1.0.0",
-    "keywords": [],
-    "author": "Tin Yuet Ko <kotinyuet@gmail.com>",
-    "license": "ISC",
-    "scripts": {
-        "dev": "nodemon server.js"
-    },
-    "dependencies": {
-        "bcrypt": "^6.0.0",
-        "cors": "^2.8.5",
-        "dotenv": "^17.2.3",
-        "express": "^5.1.0",
-        "nodemon": "^3.1.11",
-        "react-router-dom": "^7.9.5",
-        "sqlite3": "^5.1.7",
-        "stripe": "^20.0.0"
-    }
+  "dependencies": {
+    "axios": "^1.12.2"
+  }
 }

@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { products } from "../Products.jsx"
+import { products } from "../products.js";
 import ProductDisplay from "./ProductDisplay";
 export default function ProductPage() {
     const params = useParams()

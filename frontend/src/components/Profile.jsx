@@ -1,13 +1,13 @@
 import Header from "./Header";
 import { useEffect, useState } from "react";
-import List from "../List.jsx"
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useCallback } from "react";
 export default function Profile () {
     const navigate = useNavigate();
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState(null)
-    const fetchUser = async () => {
+    const fetchUser = useCallback(async () => {
         if (!localStorage.getItem("token")) {
         return (navigate("/login"))
     }
@@ -20,13 +20,13 @@ export default function Profile () {
         const data = await res.json()
         setUsername(data.username)
         setLoading(false)
-        } catch(err) {
+        } catch {
             setErr("Error fetching username")
             setLoading(false)}
         
-    };
-    
-    useEffect(() => {fetchUser()}, []);
+    }, [navigate]);
+
+    useEffect(() => {fetchUser()}, [fetchUser]);
     if (loading) {
         return (<div>
             <h1>Loading...</h1>
@@ -38,9 +38,7 @@ export default function Profile () {
 
     return (
         <div>
-            <Header/>
             <h1>Welcome, {username}!</h1>
-            <List/>
         </div>
     )
 }

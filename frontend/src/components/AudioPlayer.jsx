@@ -59,6 +59,10 @@ const AudioPlayer = ({ audioSrc, imageSrc }) => {
     };
   }, []);
 
+
+
+
+
   return (
     <div className="player-card">
       <img src={imageSrc} alt="Cover"/>

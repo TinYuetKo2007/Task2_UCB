@@ -28,7 +28,7 @@ app.post("/signup", async (req, res) => {
     const {username, password} = req.body;
     try {
         const hash = await bcrypt.hash(password, 10)
-        appDB.run(`INSERT INTO users (username, password) VALUES (?,?)`, [username, hash], function (err) {
+        appDB.run(`INSERT INTO users (username, password, role) VALUES (?,?,?)`, [username, hash, "USER"], function (err) {
             if (err)
                 return res.status(400).json({success: false, message: err.message})
             res.json({success: true})
@@ -38,11 +38,6 @@ app.post("/signup", async (req, res) => {
     }
 });
 
-/* JWT is valid or not
- Returns actual user as object */
-app.get("/me", verify, (req, res) => {
-  return res.json(req.user)
-});
 
 //LOGIN USER
 app.post("/login", (req, res) => {
@@ -57,7 +52,8 @@ app.post("/login", (req, res) => {
       const match = await bcrypt.compare(password, row.password);
       if (match) {
         console.log(process.env.JWT_LIFETIME)
-        const token = jwt.sign({ username, id: row.id }, process.env.JWT_SECRET_KEY, {
+        // Pass in user data + create token
+        const token = jwt.sign({ username, id: row.id, role: row.role }, process.env.JWT_SECRET_KEY, {
             expiresIn: process.env.JWT_LIFETIME
         });
         res.json({ success: true, message: "Login successful", token });
@@ -66,6 +62,13 @@ app.post("/login", (req, res) => {
       }
     });
   });
+  
+app.use(verify);
+/* JWT is valid or not
+ Returns actual user as object */
+app.get("/me", verify, (req, res) => {
+  return res.json(req.user)
+});
 
 app.post("/create-checkout-session", async (req, res) => {
   try {
@@ -159,15 +162,53 @@ app.get("/notes", verify, async (req, res) => {
 });
 
 app.post("/notes", verify, async (req, res) => {
+    const { title, text } = req.body;
     const userid = req.user.id;
     const sql = `INSERT INTO notes(user_id, title, text) VALUES(?, ?, ?)`;
   try {
-    const note = await execute(appDB, sql, [userid, req.body.title, req.body.text]);
+    const note = await execute(appDB, sql, [userid, title, text]);
     res.json({note, success: true})
   } catch (err) {
     console.log(err);
     res.status(500).json({success: false, message: "Error creating notes"})
   } 
 });
+
+
+app.get("/songs", verify, async (req, res) => {
+  const userid = req.user.id;
+  const songs = await fetchAll(appDB, `SELECT songs.*, artist_name FROM songs JOIN artists ON songs.artist_id = artists.id`)
+  console.log(songs)
+  return res.json({songs}) // Returns notes to user
+});
+app.get("/songs/:songId", verify, async (req, res) => {
+  const songId = req.params.songId
+  const songs = await fetchAll(appDB, `SELECT * FROM songs WHERE id = ?`, [songId])
+  console.log(songs)
+  return res.json(songs[0]) // Returns notes to user
+});
+
+app.post("/songs", verify, async (req, res) => {
+    const { title, text } = req.body;
+    const userid = req.user.id;
+    const sql = `INSERT INTO songs(user_id, title, text) VALUES(?, ?, ?)`;
+  try {
+    const song = await execute(appDB, sql, [userid, title, text]);
+    res.json({song, success: true})
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({success: false, message: "Error creating notes"})
+  } 
+});
+
+// only work for admins
+app.get("/users", async (req, res) => {
+    const userid = req.user.id;
+    if (req.user.role !== "ADMIN") {
+      return res.json({success: false})
+    }
+  const users = await fetchAll(appDB, `SELECT username, role FROM users`)
+  return res.json({users}) // Returns notes to user
+})
 
 app.listen(4000, () => console.log("Server running on http://localhost:4000"));

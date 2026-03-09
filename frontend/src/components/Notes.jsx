@@ -36,16 +36,25 @@ export default function Notes() {
     );
   }
   return (
-    <>
-      <div style={{ backgroundColor: "#FFE2B6" }}>
-        <h1>Notes</h1>
+    <div style={{display: "flex", 
+    flexDirection: "column", 
+    maxWidth: "100%",
+    alignItems: "start"}}>
+    <h1>Notes</h1>
+    <div className="container">
+
+      <div>
+        <CreateNotes onSuccess={fetchNotes}/>
       </div>
-      <CreateNotes onSuccess={fetchNotes}/>
+      
+      <div className="notes-display">
       {notes.map((note) => (
         <div key={note.id}>
           <h2>{note.title}</h2> <h3>{note.text}</h3>
         </div>
       ))}
-    </>
+      </div>
+    </div>
+    </div>
   );
 }
