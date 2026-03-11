@@ -36,7 +36,8 @@ export default function SongPage() {
       }
     return (
         <div>
-            <h1>{ song.artist_id }</h1>
+            <h1>{ song.artist_name }</h1>
+            <img src={song.cover_image}/>
             <h2>{ song.title }</h2>
         </div>
     )
