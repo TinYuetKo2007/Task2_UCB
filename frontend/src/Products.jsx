@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
-import Header from "./components/Header.jsx"
-import ProductDisplay from "./components/ProductDisplay.jsx";
 import { Link } from "react-router-dom"
-import { products } from "./products.js";
+
 const Message = ({ message }) => (
   <section>
     <p>{message}</p>
@@ -11,6 +9,13 @@ const Message = ({ message }) => (
 
 export default function Products() {
   const [message, setMessage] = useState("");
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:4000/products")
+      .then(res => res.json())
+      .then(data => setProducts(data));
+  }, []);
 
   useEffect(() => {
     // Check to see if this is a redirect back from Checkout

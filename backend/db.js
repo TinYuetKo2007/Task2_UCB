@@ -45,18 +45,16 @@ appDB.serialize(() => {
         name TEXT UNIQUE NOT NULL
       )
     `);
-    // Songs
+    // Products
     appDB.run(`
-        CREATE TABLE IF NOT EXISTS songs (
+      CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        artist_id INTEGER,
-        genre TEXT,
-        year INTEGER,
-        cover_image TEXT,
-        FOREIGN KEY (artist_id) REFERENCES artists(id)
+        name TEXT NOT NULL,
+        description TEXT,
+        priceId TEXT NOT NULL,
+        productId TEXT UNIQUE
       )
-  `);
+    `);
     appDB.run(`
         CREATE TABLE IF NOT EXISTS notes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

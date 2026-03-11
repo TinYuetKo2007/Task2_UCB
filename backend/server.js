@@ -175,30 +175,23 @@ app.post("/notes", verify, async (req, res) => {
 });
 
 
-app.get("/songs", verify, async (req, res) => {
-  const userid = req.user.id;
-  const songs = await fetchAll(appDB, `SELECT songs.*, artist_name FROM songs JOIN artists ON songs.artist_id = artists.id`)
-  console.log(songs)
-  return res.json({songs}) // Returns notes to user
-});
-app.get("/songs/:songId", verify, async (req, res) => {
-  const songId = req.params.songId
-  const songs = await fetchAll(appDB, `SELECT * FROM songs WHERE id = ?`, [songId])
-  console.log(songs)
-  return res.json(songs[0]) // Returns notes to user
-});
-
-app.post("/songs", verify, async (req, res) => {
-    const { title, text } = req.body;
-    const userid = req.user.id;
-    const sql = `INSERT INTO songs(user_id, title, text) VALUES(?, ?, ?)`;
+app.get("/products", async (req, res) => {
   try {
-    const song = await execute(appDB, sql, [userid, title, text]);
-    res.json({song, success: true})
+    const products = await fetchAll(appDB, "SELECT * FROM products");
+    res.json(products);
   } catch (err) {
-    console.log(err);
-    res.status(500).json({success: false, message: "Error creating notes"})
-  } 
+    res.status(500).json({ error: err.message });
+  }
+
+});
+app.get("/products/:productId", async (req, res) => {
+  const rows = await fetchAll(
+    appDB,
+    "SELECT * FROM products WHERE productId = ?",
+    [req.params.productId]
+  );
+
+  res.json(rows[0]);
 });
 
 // only work for admins
