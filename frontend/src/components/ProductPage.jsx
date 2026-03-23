@@ -1,15 +1,29 @@
 import { useParams } from "react-router-dom";
-import { products } from "../products.js";
 import ProductDisplay from "./ProductDisplay";
+import { useState, useEffect } from "react";
 export default function ProductPage() {
-    const params = useParams()
-    const product = products.find((product) => product.productId === params.productId)
-    console.log(params.productId)
-    if (product === undefined) {return (<><h1>Product Not Found</h1></>)}
-    return (
-        <div>
-            {/* {params.productId} */}
-            <ProductDisplay product={product}/>
-        </div>
-    )
+  const params = useParams();
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:4000/products")
+      .then(res => res.json())
+      .then(data => setProducts(data));
+  }, []);
+
+  const product = products.find(
+    (product) => product.id === Number(params.productId)
+  );
+
+  if (products.length === 0) return <h1>Loading...</h1>;
+
+  if (!product) {
+    return <h1>Product Not Found</h1>;
+  }
+
+  return (
+    <div>
+      <ProductDisplay product={product} />
+    </div>
+  );
 }

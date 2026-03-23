@@ -2,8 +2,10 @@ import giraffe from "../image/giraffe.jpg"
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-function SignUp() {
+export default function SignUp() {
     const [username, setUsername] = useState("");
+    const [forename, setForename] = useState("");
+    const [surname, setSurname] = useState("")
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
@@ -11,7 +13,7 @@ function SignUp() {
  const handleRegister = async (e) => {
         e.preventDefault();
 
-        if (!username || !password) {
+        if (!username || !forename || !surname || !password) {
             setMessage("Please enter username and password.");
             return;
         }
@@ -27,6 +29,9 @@ function SignUp() {
 
             if (data.success) {
                 localStorage.setItem("username", username);
+                if (data.token) {
+                    localStorage.setItem("token", data.token);
+                }
                 setMessage("Registration successful! Redirecting...");
                 setTimeout(() => navigate("/profile"), 1000);
             } else {
@@ -38,7 +43,7 @@ function SignUp() {
     };
 
     return (
-        <div className="container" style={{ height: "95vh"}}>
+        <div className="container" style={{ height: "100vh"}}>
             <div className="form-container">
                     <form className="form" onSubmit={handleRegister}>
                     <button onClick={() => navigate("/")}>Go Back</button>
@@ -48,6 +53,18 @@ function SignUp() {
                     placeholder="Username" 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}/>
+
+                    <input 
+                    type="text" 
+                    placeholder="First Name" 
+                    value={forename}
+                    onChange={(e) => setForename(e.target.value)}/>
+
+                    <input 
+                    type="text" 
+                    placeholder="Last Name" 
+                    value={surname}
+                    onChange={(e) => setSurname(e.target.value)}/>
 
                     <input 
                     type="password" 
@@ -63,4 +80,3 @@ function SignUp() {
         </div>
     )
 }
-export default SignUp;

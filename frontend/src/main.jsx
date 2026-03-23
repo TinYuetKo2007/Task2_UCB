@@ -3,47 +3,93 @@ import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 import RootLayout from './RootLayout.jsx'
 import App from "./App.jsx"
-import Contact from "./Contact.jsx"
+import Contact from "./components/Contact.jsx"
 import Login from './components/LogIn.jsx'
 import SignUp from './components/SignUp.jsx'
 import Profile from './components/Profile.jsx'
-import SongUploader from "./components/SongUploader.jsx"
 import AboutUs from './components/AboutUs.jsx'
-import Products from './Products.jsx'
+import Products from './components/Products.jsx'
 import ProductPage from './components/ProductPage.jsx'
-import Notes from './components/Notes.jsx'
+import Reports from './components/Reports.jsx'
 import AdminPage from './components/admin/AdminPage.jsx'
 import SongPage from './components/SongPage.jsx'
 import Songs from './components/Songs.jsx'
+import AddProduct from './components/admin/AddProduct.jsx'
+import EditPage from './components/admin/EditPage.jsx'
 
 // Links
-const Router = createBrowserRouter([
-  {path: "/login", element: <Login/>},
-  {path: "/signup", element: <SignUp/>},
-    {
-    path: "/",
-    Component: RootLayout,
-    children: [
-  {path: "/", element: <App/>},
-  {path: "/profile", element: <Profile/>},
-  {path: "/add-song", element: <SongUploader/>},
-  {path: "/contact", element: <Contact/>},
-  {path: "/aboutus", element: <AboutUs/>},
-  {path: "/admin", element: <AdminPage/>},
-  {path: "/notes", element: <Notes/>},
-  {path: "/songs", 
-    children: [
-    {index: true, element: <Songs/>},
-    {path: ":songId", element: <SongPage/>},
-  ]},
-  {path: "/products",
-  children: [
-    {index: true, element: <Products/>},
-    {path: ":productId", element: <ProductPage/>},
-  ]
-}]}
-])
+export const routeConfig = [
+  { path: "/login", element: <Login /> },
+  { path: "/signup", element: <SignUp /> },
 
+  {
+    path: "/",
+    element: <RootLayout />,
+    children: [
+      { index: true, element: <App />, name: "Home" },
+
+      { path: "profile", element: <Profile />, name: "Profile" },
+      { path: "contact", element: <Contact />, name: "Contact Page" },
+      { path: "aboutus", element: <AboutUs />, name: "About Us" },
+
+      { path: "admin", children: [
+        {index: true, element: <AdminPage />, searchable: false,},
+        {path: "add-product", element: <AddProduct />, searchable: false,},
+        {path: "edit/:type", element: <EditPage />, searchable: false},
+        {path: "reports", element: <Reports />, searchable: false},
+      ]},
+      {
+        path: "songs",
+        children: [
+          { index: true, element: <Songs />, name: "Songs" },
+          { path: ":songId", element: <SongPage /> }
+        ]
+      },
+
+      {
+        path: "products",
+        children: [
+          { index: true, element: <Products />, name: "Products" },
+          { path: ":productId", element: <ProductPage /> }
+        ]
+      }
+    ]
+  }
+];
+const Router = createBrowserRouter(routeConfig);
+
+export function getSearchPages(routes, basePath = "") {
+  let pages = [];
+
+  routes.forEach((route) => {
+    const fullPath = route.path
+      ? basePath + route.path
+      : basePath;
+
+    if (
+      route.name &&
+      route.path &&
+      route.searchable !== false &&
+      !route.path.includes(":")
+    ) {
+      pages.push({
+        id: fullPath,
+        name: route.name,
+        path: fullPath
+      });
+    }
+
+    if (route.children) {
+      pages = pages.concat(
+        getSearchPages(route.children, fullPath === "/" ? "" : fullPath)
+      );
+    }
+  });
+
+  return pages;
+}
+
+export const searchPages = getSearchPages(routeConfig);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

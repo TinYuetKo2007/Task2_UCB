@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import UsersTable from "./UsersTable";
+import ProductsTable from "./ProductsTable";
+import farm_food from "../../image/farm_food.jpg"
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -47,10 +49,61 @@ export default function AdminPage() {
     return <h1>Not an admin: Access denied.</h1>;
   }
 
+  const syncStripeProducts = async () => {
+    await fetch("http://localhost:4000/sync-stripe-products", {
+      method: "POST"
+    });
+  
+    alert("Stripe products synced");
+  };
+
   return (
     <>
-      <h1>Admin Dashboard</h1>
-      <UsersTable />
-    </>
-  );
+    <div className='parent-container'>
+      <img src={farm_food} style={{
+      width: "100vw",
+    height: "170px",
+    objectFit: "cover",
+    filter: "brightness(50%)"
+      }}/>
+        <div className='bottom-left'>
+      <div className='main-title'>
+      <b><h2>Admin Dashboard</h2></b>
+      </div>
+    </div>
+  </div>
+
+  <div className="admin-dashboard">
+    <div className="admin-layout">
+      
+      <div className="admin-section">
+        <div className="admin-header">
+          <h3>List of Users</h3>
+          <button className="edit-btn" onClick={() => navigate("/admin/edit/users")}>Edit</button>
+        </div>
+        <UsersTable />
+      </div>
+
+      <div className="admin-section">
+        <div className="admin-header">
+          <h3>List of Products</h3>
+          <button className="edit-btn" onClick={() => navigate("/admin/edit/products")}>Edit</button>
+        </div>
+        <ProductsTable />
+      </div>
+
+    </div>
+
+    <button className="report-btn"
+      onClick={() => navigate("add-product")}>
+      Add Product
+    </button>
+    <button className="report-btn" onClick={() => navigate("reports")}>
+      Create report
+    </button>
+    <button className="report-btn" onClick={syncStripeProducts}>
+  Sync Stripe Catalog
+</button>
+  </div></>
+);
 }

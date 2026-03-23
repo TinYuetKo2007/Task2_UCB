@@ -1,9 +1,7 @@
 import './App.css'
-import { Link } from 'react-router-dom';
-import AudioPlayer from "./components/AudioPlayer.jsx";
 const API = "http://localhost:5173";
-import song from "./audio/SweaterWeather.mp3"
-import zoo2 from "./image/zoo2.jpeg"
+import farm_food from "./image/farm_food.jpg"
+
 function App() {
   const username = localStorage.getItem("username")
   console.log("username", username)
@@ -12,24 +10,35 @@ function App() {
   return (
     <div>
     <div className='parent-container'>
-    <img src={zoo2} style={{width: "100%"}}/>
+    <img src={farm_food} style={{
+      width: "100vw",
+    height: "600px",
+    objectFit: "cover",
+    filter: "brightness(50%)"
+      }}/>
     <div className='bottom-left'>
       <div className='main-title'>
-      <b><h1>Riget Zoo Adventures</h1></b>
-      <h2>Explore the Wild with Us</h2>
+      <b><h1>Greenfield Local Hub</h1></b>
+      <h2>Locally produced food</h2>
       </div>
     </div>
-      
-</div>
+  </div>
 
-    <div className='second-section'>
-    <h2>What customers have said</h2>
-    <p>"RZA has brought our family many great memories I will always cherish!"</p>
-    <p>"They have helped us with so much. I cannot be any more grateful."</p>
+    <div>
+    <h1>About Greenfield Local Hub</h1>
+    <p>We are a co-operative of local farmers and food producers in the United Kingdom. 
+      We hope to offer the best locally-produced food and drinks.</p>
+    <h2>By using our online App, you can:</h2>
+    <ul>
+      <li>Buy locally produced food, sourced from our farms</li><br/>
+      <li>Learn more about the benefits of buying from local sources</li><br/>
+    </ul>
     </div>
-    <nav className='form'>
-      <AudioPlayer audioSrc={song} />
-    </nav>
+    <div className='second-section'>
+    <h1>What Our Customers Say</h1>
+    <h2>"Lorem ipsum"</h2>
+    <p>- John Smith</p>
+    </div>
     
     </div>
   )

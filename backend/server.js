@@ -18,17 +18,17 @@ app.use(express.json());
 
 app.use(cors({
     origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
 app.use(express.urlencoded({ extended: true }));
 // REGISTER NEW USER
 
 app.post("/signup", async (req, res) => {
-    const {username, password} = req.body;
+    const {username, forename, surname, password} = req.body;
     try {
         const hash = await bcrypt.hash(password, 10)
-        appDB.run(`INSERT INTO users (username, password, role) VALUES (?,?,?)`, [username, hash, "USER"], function (err) {
+        appDB.run(`INSERT INTO users (username, forename, surname, password, role) VALUES (?,?,?,?,?)`, [username, forename, surname, hash, "USER"], function (err) {
             if (err)
                 return res.status(400).json({success: false, message: err.message})
             res.json({success: true})
@@ -63,11 +63,33 @@ app.post("/login", (req, res) => {
     });
   });
   
-app.use(verify);
-/* JWT is valid or not
- Returns actual user as object */
-app.get("/me", verify, (req, res) => {
-  return res.json(req.user)
+app.delete("/users/:id", verify, async (req, res) => {
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  const userId = req.params.id;
+
+  try {
+    await execute(appDB, "DELETE FROM users WHERE id = ?", [userId]);
+    res.json({ success: true, message: "User deleted" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Delete failed" });
+  }
+});
+app.delete("/products/:id", verify, async (req, res) => {
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  const productId = req.params.id;
+
+  try {
+    await execute(appDB, "DELETE FROM products WHERE id = ?", [productId]);
+    res.json({ success: true, message: "Product deleted" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Delete failed" });
+  }
 });
 
 app.post("/create-checkout-session", async (req, res) => {
@@ -85,6 +107,28 @@ app.post("/create-checkout-session", async (req, res) => {
   res.status(500).json({ error: err.message });
 }
 })
+
+async function createBasketCheckout(basketItems) {
+  const session = await stripe.checkout.sessions.create({
+    // 'payment' for one-time purchases; 'subscription' for recurring items
+    mode: 'payment', 
+    success_url: `${ process.env.CLIENT_URL }/products?success=true`,
+    cancel_url: `${ process.env.CLIENT_URL }/products?canceled=true`,
+    line_items: basketItems.map(item => ({
+      price_data: {
+        currency: 'gbp',
+        unit_amount: item.priceInPence, // e.g., 2000 for $20.00
+        product_data: {
+          name: item.name,
+          images: [item.imageUrl],
+        },
+      },
+      quantity: item.quantity,
+    })),
+  });
+
+  return session.url; // Redirect your customer to this URL
+}
 
 // Carbon footprint calculator
 const emissionFactors = {
@@ -155,43 +199,178 @@ app.post("/calculate", (req, res) => {
   );
 });
 
-app.get("/notes", verify, async (req, res) => {
+app.get("/reports", verify, async (req, res) => {
   const userid = req.user.id;
-  const notes = await fetchAll(appDB, `SELECT * FROM notes WHERE user_id = ?`, [userid])
-  return res.json({notes}) // Returns notes to user
+  const reports = await fetchAll(appDB, `SELECT * FROM reports WHERE user_id = ?`, [userid])
+  return res.json({reports}) // Returns reports to user
 });
 
-app.post("/notes", verify, async (req, res) => {
+app.post("/reports", verify, async (req, res) => {
     const { title, text } = req.body;
     const userid = req.user.id;
-    const sql = `INSERT INTO notes(user_id, title, text) VALUES(?, ?, ?)`;
+    const sql = `INSERT INTO reports(user_id, title, text) VALUES(?, ?, ?)`;
   try {
     const note = await execute(appDB, sql, [userid, title, text]);
     res.json({note, success: true})
   } catch (err) {
     console.log(err);
-    res.status(500).json({success: false, message: "Error creating notes"})
+    res.status(500).json({success: false, message: "Error creating reports"})
   } 
 });
 
-
 app.get("/products", async (req, res) => {
-  try {
-    const products = await fetchAll(appDB, "SELECT * FROM products");
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-
+  const products = await fetchAll(appDB, "SELECT * FROM products");
+  res.json(products);
 });
-app.get("/products/:productId", async (req, res) => {
-  const rows = await fetchAll(
+
+app.post("/products", async (req, res) => {
+  const { title, description, image, price } = req.body;
+
+  try {
+
+    // Product properties
+    const stripeProduct = await stripe.products.create({
+      name: title,
+      description: description,
+      images: [image],
+    });
+
+    // Create price
+    const stripePrice = await stripe.prices.create({
+      product: stripeProduct.id,
+      unit_amount: price * 100,
+      currency: "gbp"
+    });
+
+    // Save to DB
+    const product = await execute(
+      appDB,
+      `INSERT INTO products (title, description, image, price, productId, priceId)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        title,
+        description,
+        image,
+        price,
+        stripeProduct.id,
+        stripePrice.id
+      ]
+    );
+
+    res.json({ success: true, product });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+    console.log(err)
+  }
+});
+
+app.get("/products/:id", async (req, res) => {
+  const product = await fetchOne(
     appDB,
-    "SELECT * FROM products WHERE productId = ?",
-    [req.params.productId]
+    "SELECT * FROM products WHERE id = ?",
+    [req.params.id]
   );
 
-  res.json(rows[0]);
+  res.json(product);
+});
+// Get products from product catalog
+app.get("/stripe-products", async (req, res) => {
+  try {
+
+    const products = await stripe.products.list({ limit: 100 });
+    console.log("Stripe products:", products.data);
+
+    const prices = await stripe.prices.list({ limit: 100 });
+    console.log("Stripe prices:", prices.data);
+
+    const formattedProducts = products.data.map(product => {
+
+      const price = prices.data.find(
+        p => p.product === product.id
+      );
+
+      return {
+        title: product.name,
+        description: product.description,
+        image: product.images?.[0] || "",
+        price: price ? price.unit_amount / 100 : 0,
+        productId: product.id,
+        priceId: price ? price.id : null
+      };
+    });
+
+    console.log("Formatted:", formattedProducts);
+
+    res.json(formattedProducts);
+
+  } catch (err) {
+    console.error("Stripe fetch error:", err.message);
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/sync-stripe-products", async (req, res) => {
+  try {
+
+    const products = await stripe.products.list({ limit: 100 });
+    const prices = await stripe.prices.list({ limit: 100 });
+
+    for (const product of products.data) {
+
+      const price = prices.data.find(
+        p => p.product === product.id
+      );
+
+      const exists = await fetchAll(
+        appDB,
+        "SELECT * FROM products WHERE productId = ?",
+        [product.id]
+      );
+
+      if (exists.length === 0) {
+
+        await execute(
+          appDB,
+          `INSERT INTO products
+          (title, description, image, price, category, productId, priceId)
+          VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            product.name,
+            product.description,
+            product.images?.[0] || "",
+            price ? price.unit_amount / 100 : 0,
+            "General",
+            product.id,
+            price ? price.id : null
+          ]
+        );
+
+        console.log("Inserted:", product.name);
+      }
+    }
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Sync error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.use(verify);
+/* JWT is valid or not
+ Returns actual user as object */
+app.get("/me", verify, (req, res) => {
+  return res.json(req.user)
+});
+app.get("/me/profile", verify, async (req, res) => {
+  const users = await fetchAll(appDB, `SELECT * FROM users WHERE username = ?`, [req.user.username]);
+  return res.json(users[0]);
+});
+app.get("/me/orders", verify, async (req, res) => {
+  const orders = await fetchAll(appDB, `SELECT * FROM orders WHERE user_id = ?`, [req.user.id]);
+  return res.json({orders});
 });
 
 // only work for admins
@@ -201,7 +380,7 @@ app.get("/users", async (req, res) => {
       return res.json({success: false})
     }
   const users = await fetchAll(appDB, `SELECT username, role FROM users`)
-  return res.json({users}) // Returns notes to user
+  return res.json({users}) // Returns reports to user
 })
 
 app.listen(4000, () => console.log("Server running on http://localhost:4000"));
