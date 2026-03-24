@@ -1,4 +1,4 @@
-import giraffe from "../image/giraffe.jpg"
+import bakery from "../image/bread_bakery.jpg"
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
@@ -17,7 +17,11 @@ export default function SignUp() {
             setMessage("Please enter username and password.");
             return;
         }
-
+        if (password.length < 8) {
+            setMessage("Password must be at least 8 characters.");
+            return;
+        }
+         
         try {
             const res = await fetch("http://localhost:4000/signup", {
                 method: "POST",
@@ -53,19 +57,21 @@ export default function SignUp() {
                     placeholder="Username" 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}/>
+                    <div style={{display:"flex", flexDirection: "row"}}>
+                        <input 
+                        type="text" 
+                        placeholder="First Name" 
+                        value={forename}
+                        onChange={(e) => setForename(e.target.value)}
+                        className="name-input"/>
 
-                    <input 
-                    type="text" 
-                    placeholder="First Name" 
-                    value={forename}
-                    onChange={(e) => setForename(e.target.value)}/>
-
-                    <input 
-                    type="text" 
-                    placeholder="Last Name" 
-                    value={surname}
-                    onChange={(e) => setSurname(e.target.value)}/>
-
+                        <input 
+                        type="text" 
+                        placeholder="Last Name" 
+                        value={surname}
+                        onChange={(e) => setSurname(e.target.value)}
+                        className="name-input"/>
+                    </div>
                     <input 
                     type="password" 
                     placeholder="Password" 
@@ -76,7 +82,7 @@ export default function SignUp() {
                 </form>
                     <p>{message}</p>
             </div>
-            <img src={giraffe} />
+            <img src={bakery} />
         </div>
     )
 }

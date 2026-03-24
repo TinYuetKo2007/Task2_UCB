@@ -93,17 +93,18 @@ export default function AdminPage() {
       </div>
 
     </div>
-
-    <button className="report-btn"
-      onClick={() => navigate("add-product")}>
-      Add Product
+    <div style={{marginLeft: "10px", marginRight: "10px"}}>
+      <button className="report-btn"
+        onClick={() => navigate("add-product")}>
+        Add Product
+      </button>
+      <button className="report-btn" onClick={() => navigate("reports")}>
+        Create report
+      </button>
+      <button className="report-btn" onClick={syncStripeProducts}>
+    Sync Stripe Catalog
     </button>
-    <button className="report-btn" onClick={() => navigate("reports")}>
-      Create report
-    </button>
-    <button className="report-btn" onClick={syncStripeProducts}>
-  Sync Stripe Catalog
-</button>
+  </div>
   </div></>
 );
 }

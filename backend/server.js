@@ -1,27 +1,43 @@
 require("dotenv").config();
 const jwt =  require("jsonwebtoken");
+const helmet = require('helmet');
 const express = require("express");
 const bcrypt = require("bcrypt");
-const app = express();
 const { appDB, fetchAll, execute } = require("./db")
 const bodyParser = require("body-parser");
 const stripe = require("stripe")(process.env.STRIPE_API_KEY)
 const cors = require ("cors");
 const { verify } = require("./verify");
+const app = express();
 
 app.get("/", (req, res) => res.send("Connection successful"));
 
-// Middleware looks at code before request is sent to server
-app.use(bodyParser.json());
-app.use(express.json());
-// converts body into object
+
 
 app.use(cors({
     origin: "http://localhost:5173",
-    methods: ["GET", "POST", "DELETE"],
+    methods: ["GET", "POST", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
+// Middleware looks at code before request is sent to server
+app.use(express.json());
+// converts body into object
 app.use(express.urlencoded({ extended: true }));
+
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      "frame-ancestors": ["'none'"]
+    },
+  })
+);
+
+app.use(
+  helmet.frameguard({
+    action: 'deny',
+  })
+);
+
 // REGISTER NEW USER
 
 app.post("/signup", async (req, res) => {
@@ -42,7 +58,6 @@ app.post("/signup", async (req, res) => {
 //LOGIN USER
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
-    //console.log(username, password)
     appDB.get(`SELECT * FROM users WHERE username = ?`, [username], async (err, row) => {
       if (err) return res.status(500).json({ success: false, message: err.message });
       if (!row)
@@ -85,50 +100,58 @@ app.delete("/products/:id", verify, async (req, res) => {
   const productId = req.params.id;
 
   try {
+    // 1. Get the Stripe ID from your DB before deleting the row
+    const row = await new Promise((resolve, reject) => {
+      appDB.get("SELECT productId FROM products WHERE id = ?", [productId], (err, row) => {
+        if (err) reject(err);
+        resolve(row);
+      });
+    });
+
+    if (row && row.productId) {
+      // 2. Archive it in Stripe so it's no longer 'active'
+      await stripe.products.update(row.productId, { active: false });
+    }
+
+    // 3. Delete from your local SQLite database
     await execute(appDB, "DELETE FROM products WHERE id = ?", [productId]);
-    res.json({ success: true, message: "Product deleted" });
+
+    res.json({ success: true, message: "Product removed from DB and Stripe" });
   } catch (err) {
+    console.error("Delete Error:", err);
     res.status(500).json({ success: false, message: "Delete failed" });
   }
 });
 
 app.post("/create-checkout-session", async (req, res) => {
+  console.log("FULL RECV BODY:", req.body); // Check this in your terminal!
+
   try {
-  const { priceId } = req.body;
-  console.log( req.body )
-  const session = await stripe.checkout.sessions.create({
-    line_items: [{ price: priceId, quantity: 1 }],
-    mode: "payment",
-    success_url: `${ process.env.CLIENT_URL }/products?success=true`,
-    cancel_url: `${ process.env.CLIENT_URL }/products?canceled=true`
-  });
-  res.redirect(session.url) // For forms with no onSubmit, takes user to payment
-} catch (err) {
-  res.status(500).json({ error: err.message });
-}
-})
+    // 1. Check if items exists in the body
+    const { items } = req.body;
 
-async function createBasketCheckout(basketItems) {
-  const session = await stripe.checkout.sessions.create({
-    // 'payment' for one-time purchases; 'subscription' for recurring items
-    mode: 'payment', 
-    success_url: `${ process.env.CLIENT_URL }/products?success=true`,
-    cancel_url: `${ process.env.CLIENT_URL }/products?canceled=true`,
-    line_items: basketItems.map(item => ({
-      price_data: {
-        currency: 'gbp',
-        unit_amount: item.priceInPence, // e.g., 2000 for $20.00
-        product_data: {
-          name: item.name,
-          images: [item.imageUrl],
-        },
-      },
-      quantity: item.quantity,
-    })),
-  });
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({ error: "Items array is missing or invalid" });
+    }
 
-  return session.url; // Redirect your customer to this URL
-}
+    // 2. Stripe call
+    const session = await stripe.checkout.sessions.create({
+      line_items: items.map(item => ({
+        price: item.priceId || item.priceid, 
+        quantity: parseInt(item.quantity) || 1
+      })),
+      mode: "payment",
+      success_url: `${process.env.CLIENT_URL}/products?success=true`,
+      cancel_url: `${process.env.CLIENT_URL}/products?canceled=true`
+    });
+
+    res.json({ url: session.url });
+
+  } catch (err) {
+    console.error("STRIPE ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Carbon footprint calculator
 const emissionFactors = {
@@ -218,6 +241,21 @@ app.post("/reports", verify, async (req, res) => {
   } 
 });
 
+app.post("/contact-messages", verify, async (req, res) => {
+  const { email, text } = req.body;
+  const userid = req.user.id;
+  const date = new Date().toISOString(); // Generate current timestamp
+
+  const sql = `INSERT INTO contactMessages(userId, email, text, date) VALUES(?, ?, ?, ?)`;
+  
+  try {
+      await execute(appDB, sql, [userid, email, text, date]);
+      res.json({ success: true, message: "Message sent!" });
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, message: "Error saving message" });
+  } 
+});
 app.get("/products", async (req, res) => {
   const products = await fetchAll(appDB, "SELECT * FROM products");
   res.json(products);
@@ -313,7 +351,7 @@ app.get("/stripe-products", async (req, res) => {
 app.post("/sync-stripe-products", async (req, res) => {
   try {
 
-    const products = await stripe.products.list({ limit: 100 });
+    const products = await stripe.products.list({ limit: 100, active: true });
     const prices = await stripe.prices.list({ limit: 100 });
 
     for (const product of products.data) {

@@ -25,9 +25,7 @@ function App() {
   </div>
 
     <div>
-    <h1>About Greenfield Local Hub</h1>
-    <p>We are a co-operative of local farmers and food producers in the United Kingdom. 
-      We hope to offer the best locally-produced food and drinks.</p>
+    <h1>Freshly produced food, now available online to order.</h1>
     <h2>By using our online App, you can:</h2>
     <ul>
       <li>Buy locally produced food, sourced from our farms</li><br/>

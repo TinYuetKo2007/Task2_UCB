@@ -9,6 +9,46 @@ export default function AddProduct({onSuccess}) {
     const [category, setCategory] = useState("")
     const [_, setMessage] = useState("");
 
+    const fetchUser = useCallback(async () => {
+        if (!localStorage.getItem("token")) {
+          return navigate("/login");
+        }
+        // Allows server to identify user
+        try {
+          setLoading(true);
+          const res = await fetch("http://localhost:4000/me", {
+            method: "GET",
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+          });
+          const user = await res.json();
+          console.log(user.role);
+          setUser(user);
+          setLoading(false);
+        } catch {
+          setErr("Error fetching username");
+          setLoading(false);
+        }
+      }, [navigate]);
+    
+      useEffect(() => {
+        fetchUser();
+      }, [fetchUser]);
+      if (loading) {
+        return (
+          <div>
+            <h1>Loading...</h1>
+          </div>
+        );
+      }
+      if (err) {
+        return <h1>{err}</h1>;
+      }
+      if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
+        return <h1>Not an admin or producer: Access denied.</h1>;
+      }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 

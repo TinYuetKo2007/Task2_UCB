@@ -38,6 +38,7 @@ export default function ProductsTable() {
       <thead>
         <tr>
           <th>Product Name</th>
+          <th>Price</th>
           <th>Product Description</th>
         </tr>
       </thead>
@@ -46,6 +47,7 @@ export default function ProductsTable() {
         {products.map((product) => (
           <tr key={product.id}>
             <td>{product.title}</td>
+            <td>{product.price}</td>
             <td>{product.description}</td>
           </tr>
         ))}

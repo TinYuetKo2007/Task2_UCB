@@ -51,7 +51,7 @@ export default function Profile () {
                 }}/>
                     <div className='bottom-left'>
                 <div className='main-title'>
-                <b><h2>Admin Dashboard</h2></b>
+                <b><h2>Profile</h2></b>
                 </div>
                 </div>
             </div>

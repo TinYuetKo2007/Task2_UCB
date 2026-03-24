@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import farm_food from "../image/farm_food.jpg"
 
@@ -10,6 +10,7 @@ const Message = ({ message }) => (
 );
 
 export default function Products() {
+  const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [products, setProducts] = useState([]);
 
@@ -74,7 +75,7 @@ export default function Products() {
             placeholder="Search products..."
           />
         </div>
-
+        
         <div className="product-list">
 
           <ul className="products-grid">
@@ -87,8 +88,8 @@ export default function Products() {
               </li>
             ))}
           </ul>
-
-        </div>
+          
+        </div><button onClick={() => navigate("/basket")}>View Basket</button>
       </div>
     </div>
   );

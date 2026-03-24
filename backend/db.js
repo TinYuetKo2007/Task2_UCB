@@ -73,7 +73,14 @@ appDB.serialize(() => {
         date DATETIME,
         FOREIGN KEY (userId) REFERENCES users(id)
         )`)
-
+    appDB.run(`
+        CREATE TABLE IF NOT EXISTS contactMessages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT,
+        text TEXT NOT NULL,
+        date DATETIME,
+        FOREIGN KEY (userId) REFERENCES users(id)
+        )`)
     appDB.run(`CREATE TABLE IF NOT EXISTS calculations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         carType TEXT,

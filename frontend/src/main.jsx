@@ -12,11 +12,10 @@ import Products from './components/Products.jsx'
 import ProductPage from './components/ProductPage.jsx'
 import Reports from './components/Reports.jsx'
 import AdminPage from './components/admin/AdminPage.jsx'
-import SongPage from './components/SongPage.jsx'
-import Songs from './components/Songs.jsx'
 import AddProduct from './components/admin/AddProduct.jsx'
 import EditPage from './components/admin/EditPage.jsx'
-
+import { BasketProvider } from "./BasketContext";
+import Basket from './components/Basket.jsx'
 // Links
 export const routeConfig = [
   { path: "/login", element: <Login /> },
@@ -27,7 +26,7 @@ export const routeConfig = [
     element: <RootLayout />,
     children: [
       { index: true, element: <App />, name: "Home" },
-
+      { path: "basket", element: <Basket /> },
       { path: "profile", element: <Profile />, name: "Profile" },
       { path: "contact", element: <Contact />, name: "Contact Page" },
       { path: "aboutus", element: <AboutUs />, name: "About Us" },
@@ -38,13 +37,6 @@ export const routeConfig = [
         {path: "edit/:type", element: <EditPage />, searchable: false},
         {path: "reports", element: <Reports />, searchable: false},
       ]},
-      {
-        path: "songs",
-        children: [
-          { index: true, element: <Songs />, name: "Songs" },
-          { path: ":songId", element: <SongPage /> }
-        ]
-      },
 
       {
         path: "products",
@@ -93,6 +85,8 @@ export const searchPages = getSearchPages(routeConfig);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RouterProvider router={Router}/>
-  </StrictMode>,
+    <BasketProvider>
+      <RouterProvider router={Router}/>
+    </BasketProvider>
+  </StrictMode>
 )

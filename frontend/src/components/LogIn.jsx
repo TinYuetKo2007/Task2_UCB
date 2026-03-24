@@ -1,5 +1,5 @@
 import { useState } from "react";
-import giraffe from "../image/giraffe.jpg"
+import bakery from "../image/bread_bakery.jpg"
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
@@ -55,7 +55,7 @@ export default function Login() {
                         {message && <p className="login-message">{message}</p>}
                     </form>
                  </div>
-            <img src={giraffe} />
+            <img src={bakery} />
         </div>
     )
 }
