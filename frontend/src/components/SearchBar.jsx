@@ -12,7 +12,7 @@ const filteredData = useMemo(() => {
     .filter((item) =>
       item[searchKey].toLowerCase().includes(query.toLowerCase())
     )
-    .slice(0, 6); // limit results like Amazon
+    .slice(0, 6);
 }, [query, data, searchKey]);
 
   return (

@@ -6,6 +6,12 @@ export function BasketProvider({ children }) {
   const [basket, setBasket] = useState([]);
 
   function addToBasket(product) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login first");
+      return;
+    }
     setBasket(prev => {
       const exists = prev.find(item => item.id === product.id);
 

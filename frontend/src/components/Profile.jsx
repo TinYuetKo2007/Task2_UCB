@@ -7,6 +7,7 @@ export default function Profile () {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [forename, setForename] = useState("");
+    const [surname, setSurname] = useState("");
 
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState(null)
@@ -23,6 +24,7 @@ export default function Profile () {
         const data = await res.json()
         setEmail(data.email)
         setForename(data.forename)
+        setSurname(data.surname)
         setLoading(false)
         } catch {
             setErr("Error fetching username")
@@ -57,7 +59,9 @@ export default function Profile () {
             </div>
         <div style={{padding: "40px"}}>
             <h1>Welcome, {forename}!</h1>
-            <h2>{email}</h2>
+            <h2>Full Name: {forename} {surname}</h2>
+            <h2>Email: {email}</h2>
+            <button onClick={() => navigate("/settings")}>Settings</button>
             <h2>Recent purchases:</h2>
         </div>
         </div>

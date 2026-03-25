@@ -113,6 +113,7 @@ export default function EditPage() {
                 <><td>{item.title}</td><td>£{item.price}</td></>
               )}
               <td>
+              <button>Edit</button>
                 <button onClick={() => deleteItem(item.id)}>Delete</button>
               </td>
             </tr>

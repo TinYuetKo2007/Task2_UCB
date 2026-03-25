@@ -77,7 +77,31 @@ app.post("/login", (req, res) => {
       }
     });
   });
-  
+// User permanently deletes account
+app.delete("/users/me", verify, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await execute(appDB,
+      "DELETE FROM users WHERE id = ?",
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      message: "Account deleted"
+    });
+
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Delete failed"
+    });
+  }
+});
+
 app.delete("/users/:id", verify, async (req, res) => {
   if (req.user.role !== "ADMIN") {
     return res.status(403).json({ success: false, message: "Unauthorized" });
@@ -92,6 +116,7 @@ app.delete("/users/:id", verify, async (req, res) => {
     res.status(500).json({ success: false, message: "Delete failed" });
   }
 });
+
 app.delete("/products/:id", verify, async (req, res) => {
   if (req.user.role !== "ADMIN") {
     return res.status(403).json({ success: false, message: "Unauthorized" });
@@ -100,7 +125,6 @@ app.delete("/products/:id", verify, async (req, res) => {
   const productId = req.params.id;
 
   try {
-    // 1. Get the Stripe ID from your DB before deleting the row
     const row = await new Promise((resolve, reject) => {
       appDB.get("SELECT productId FROM products WHERE id = ?", [productId], (err, row) => {
         if (err) reject(err);
@@ -109,11 +133,9 @@ app.delete("/products/:id", verify, async (req, res) => {
     });
 
     if (row && row.productId) {
-      // 2. Archive it in Stripe so it's no longer 'active'
       await stripe.products.update(row.productId, { active: false });
     }
 
-    // 3. Delete from your local SQLite database
     await execute(appDB, "DELETE FROM products WHERE id = ?", [productId]);
 
     res.json({ success: true, message: "Product removed from DB and Stripe" });
@@ -123,26 +145,27 @@ app.delete("/products/:id", verify, async (req, res) => {
   }
 });
 
-app.post("/create-checkout-session", async (req, res) => {
-  console.log("FULL RECV BODY:", req.body); // Check this in your terminal!
+app.post("/create-checkout-session", verify, async (req, res) => {
+  console.log("User making purchase:", req.user);
 
   try {
-    // 1. Check if items exists in the body
     const { items } = req.body;
 
     if (!items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Items array is missing or invalid" });
     }
 
-    // 2. Stripe call
     const session = await stripe.checkout.sessions.create({
       line_items: items.map(item => ({
-        price: item.priceId || item.priceid, 
+        price: item.priceId || item.priceid,
         quantity: parseInt(item.quantity) || 1
       })),
       mode: "payment",
       success_url: `${process.env.CLIENT_URL}/products?success=true`,
-      cancel_url: `${process.env.CLIENT_URL}/products?canceled=true`
+      cancel_url: `${process.env.CLIENT_URL}/products?canceled=true`,
+      metadata: {
+        userId: req.user.id
+      }
     });
 
     res.json({ url: session.url });
@@ -241,21 +264,36 @@ app.post("/reports", verify, async (req, res) => {
   } 
 });
 
-app.post("/contact-messages", verify, async (req, res) => {
+app.post("/contact-messages", async (req, res) => {
   const { email, text } = req.body;
-  const userid = req.user.id;
   const date = new Date().toISOString(); // Generate current timestamp
 
-  const sql = `INSERT INTO contactMessages(userId, email, text, date) VALUES(?, ?, ?, ?)`;
+  const sql = `INSERT INTO contactMessages(email, text, date) VALUES(?, ?, ?)`;
   
   try {
-      await execute(appDB, sql, [userid, email, text, date]);
+      await execute(appDB, sql, [email, text, date]);
       res.json({ success: true, message: "Message sent!" });
   } catch (err) {
       console.error(err);
       res.status(500).json({ success: false, message: "Error saving message" });
   } 
 });
+app.get("/contact-messages", verify, async (req, res) => {
+  const sql = `SELECT * FROM contactMessages ORDER BY date DESC`;
+
+  try {
+    const contactMessages = await fetchAll(appDB, sql);
+
+    res.json({ contactMessages });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching messages"
+    });
+  }
+});
+
 app.get("/products", async (req, res) => {
   const products = await fetchAll(appDB, "SELECT * FROM products");
   res.json(products);

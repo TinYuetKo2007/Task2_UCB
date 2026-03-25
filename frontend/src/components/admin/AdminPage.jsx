@@ -2,7 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import UsersTable from "./UsersTable";
 import ProductsTable from "./ProductsTable";
+import MessagesTable from "./MessagesTable";
 import farm_food from "../../image/farm_food.jpg"
+import default_image from "../../image/default_image.png"
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -60,7 +62,12 @@ export default function AdminPage() {
   return (
     <>
     <div className='parent-container'>
-      <img src={farm_food} style={{
+      <img src={farm_food}
+      onError={(e) => {
+        e.currentTarget.onerror = null;
+        e.currentTarget.src = default_image;
+      }} 
+      style={{
       width: "100vw",
     height: "170px",
     objectFit: "cover",
@@ -91,9 +98,16 @@ export default function AdminPage() {
         </div>
         <ProductsTable />
       </div>
+      <div className="admin-section">
+        <div className="admin-header">
+          <h3>List of Messages</h3>
+          <button className="edit-btn" onClick={() => navigate("/admin/edit/contactMessages")}>Edit</button>
+        </div>
+        <MessagesTable />
+      </div>
 
     </div>
-    <div style={{marginLeft: "10px", marginRight: "10px"}}>
+    <div style={{display: "flex", gap: "10px", alignItems: "center"}}>
       <button className="report-btn"
         onClick={() => navigate("add-product")}>
         Add Product

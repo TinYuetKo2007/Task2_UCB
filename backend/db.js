@@ -41,7 +41,8 @@ appDB.serialize(() => {
         priceId TEXT NOT NULL,
         productId TEXT UNIQUE,
         image TEXT,
-        category TEXT NOT NULL
+        category TEXT NOT NULL,
+        stock INTEGER NOT NULL DEFAULT 0
       )
     `);
       appDB.run(`
@@ -78,8 +79,7 @@ appDB.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT,
         text TEXT NOT NULL,
-        date DATETIME,
-        FOREIGN KEY (userId) REFERENCES users(id)
+        date DATETIME
         )`)
     appDB.run(`CREATE TABLE IF NOT EXISTS calculations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -93,6 +93,22 @@ appDB.serialize(() => {
         totalFootprint REAL
         )`);
 });
+
+export const updateStock = async (productId, quantity) => {
+  const sql = `
+    UPDATE products 
+    SET stock = stock + ? 
+    WHERE productId = ? AND (stock + ?) >= 0
+  `;
+  return execute(appDB, sql, [quantity, productId, quantity]);
+};
+
+export const checkAvailability = async (productId) => {
+  const sql = `SELECT stock FROM products WHERE productId = ?`;
+  const result = await fetchAll(appDB, sql, [productId]);
+  return result.length > 0 ? result[0].stock : 0;
+};
+
 export const fetchAll = async (db, sql, params) => {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {

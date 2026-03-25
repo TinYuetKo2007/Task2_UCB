@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import farm_food from "../image/farm_food.jpg"
+import default_image from "../image/default_image.png"
+import { useBasket } from "../BasketContext";
 
 const Message = ({ message }) => (
   <section>
@@ -10,6 +12,7 @@ const Message = ({ message }) => (
 );
 
 export default function Products() {
+  const { basket } = useBasket();
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [products, setProducts] = useState([]);
@@ -82,14 +85,23 @@ export default function Products() {
             {products.map((product) => (
               <li key={product.id}>
                 <Link to={`/products/${product.id}`}>
-                  <img src={product.image} alt={product.title} />
+                  <img src={product.image} 
+                  alt={product.title} 
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = default_image;}}/>
                   <p>{product.title}</p>
                 </Link>
               </li>
             ))}
           </ul>
           
-        </div><button onClick={() => navigate("/basket")}>View Basket</button>
+        </div>
+        <button
+          className="basket-button"
+          onClick={() => navigate("/basket")}>
+          View Basket ({basket.length})
+        </button>
       </div>
     </div>
   );

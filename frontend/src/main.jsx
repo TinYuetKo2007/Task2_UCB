@@ -16,6 +16,9 @@ import AddProduct from './components/admin/AddProduct.jsx'
 import EditPage from './components/admin/EditPage.jsx'
 import { BasketProvider } from "./BasketContext";
 import Basket from './components/Basket.jsx'
+import BasketSuccess from "./components/BasketSuccess";
+import ProfileSettings from './components/ProfileSettings.jsx'
+
 // Links
 export const routeConfig = [
   { path: "/login", element: <Login /> },
@@ -28,8 +31,10 @@ export const routeConfig = [
       { index: true, element: <App />, name: "Home" },
       { path: "basket", element: <Basket /> },
       { path: "profile", element: <Profile />, name: "Profile" },
+      { path: "settings", element: <ProfileSettings />, name: "Settings" },
       { path: "contact", element: <Contact />, name: "Contact Page" },
       { path: "aboutus", element: <AboutUs />, name: "About Us" },
+      { path: "basket-success", element: <BasketSuccess />, searchable: false,},
 
       { path: "admin", children: [
         {index: true, element: <AdminPage />, searchable: false,},
