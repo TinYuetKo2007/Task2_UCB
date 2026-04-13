@@ -46,18 +46,51 @@ app.use(
 // REGISTER NEW USER
 
 app.post("/signup", async (req, res) => {
-    const {forename, surname, email, password} = req.body;
-    try {
-        const hash = await bcrypt.hash(password, 10)
-        appDB.run(`INSERT INTO users (forename, surname, email, password, role) VALUES (?,?,?,?,?)`, 
-          [forename, surname, email, hash, "USER"], function (err) {
-            if (err)
-                return res.status(400).json({success: false, message: err.message})
-            res.json({success: true})
-        });
-    } catch (err) {
-        res.status(500).json({success: false, message: "Registration failed"})
-    }
+  const { forename, surname, email, password } = req.body;
+
+  try {
+      const hash = await bcrypt.hash(password, 10);
+
+      appDB.run(
+          `INSERT INTO users (forename, surname, email, password, role) VALUES (?,?,?,?,?)`,
+          [forename, surname, email, hash, "USER"],
+          function (err) {
+              if (err) {
+                  return res.status(400).json({
+                      success: false,
+                      message: err.message
+                  });
+              }
+
+              // 🔥 NEW: get inserted user id
+              const userId = this.lastID;
+
+              // 🔥 create token
+              const token = jwt.sign(
+                  {
+                      email,
+                      id: userId,
+                      role: "USER"
+                  },
+                  process.env.JWT_SECRET_KEY,
+                  {
+                      expiresIn: process.env.JWT_LIFETIME
+                  }
+              );
+
+              return res.json({
+                  success: true,
+                  token
+              });
+          }
+      );
+
+  } catch (err) {
+      res.status(500).json({
+          success: false,
+          message: "Registration failed"
+      });
+  }
 });
 
 
@@ -475,8 +508,6 @@ app.get("/producerApplications", async (req, res) => {
       "SELECT * FROM producerApplications"
     );
 
-    console.log(applications);
-
     res.json({ applications });
   } catch (err) {
     console.error(err);
@@ -484,7 +515,78 @@ app.get("/producerApplications", async (req, res) => {
   }
 });
 
+const optionalVerify = (req, res, next) => {
+  const auth = req.headers.authorization;
 
+  if (!auth) {
+    req.user = { role: "GUEST" };
+    return next();
+  }
+
+  const token = auth.split(" ")[1];
+
+  if (!token || token === "null" || token === "undefined") {
+    req.user = { role: "GUEST" };
+    return next();
+  }
+
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET_KEY);
+  } catch (err) {
+    req.user = { role: "GUEST" };
+  }
+
+  next();
+};
+
+app.get("/products", optionalVerify, async (req, res) => {
+  try {
+
+    let products = [];
+
+    switch (req.user.role) {
+
+      case "PRODUCER":
+        products = await fetchAll(
+          appDB,
+          `SELECT * FROM products
+           WHERE producerId = ?
+           AND title != 'Delivery Fee'`,
+          [req.user.id]
+        );
+        break;
+    
+      case "ADMIN":
+        products = await fetchAll(
+          appDB,
+          `SELECT * FROM products
+           WHERE title != 'Delivery Fee'`
+        );
+        break;
+    
+      case "USER":
+      case "GUEST":
+        products = await fetchAll(
+          appDB,
+          `SELECT * FROM products
+           WHERE title != 'Delivery Fee'
+           AND stock > 0`
+        );
+        break;
+    
+      default:
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    res.json(products);
+
+  } catch (err) {
+    console.error("GET PRODUCTS ERROR:", err);
+    res.status(500).json({
+      error: "Failed to fetch products"
+    });
+  }
+});
 
 app.use(verify);
 /* JWT is valid or not
@@ -640,7 +742,7 @@ app.post("/orders/store", verify, async (req, res) => {
 });
 
 // only work for admins
-app.get("/users", async (req, res) => {
+app.get("/users", verify, async (req, res) => {
     const userid = req.user.id;
     if (req.user.role !== "ADMIN") {
       return res.json({success: false})
@@ -912,55 +1014,7 @@ app.put("/:type/:id", verify, async (req, res) => {
   }
 });
 
-app.get("/products", verify, async (req, res) => {
-  try {
 
-    let products = [];
-
-    switch (req.user.role) {
-
-      case "PRODUCER":
-        products = await fetchAll(
-          appDB,
-          `SELECT * FROM products
-           WHERE producerId = ?
-           AND title != 'Delivery Fee'`,
-          [req.user.id]
-        );
-        break;
-
-      case "ADMIN":
-        products = await fetchAll(
-          appDB,
-          `SELECT * FROM products
-           WHERE title != 'Delivery Fee'`
-        );
-        break;
-
-      case "USER":
-        products = await fetchAll(
-          appDB,
-          `SELECT * FROM products
-           WHERE title != 'Delivery Fee'
-           AND stock > 0`
-        );
-        break;
-
-      default:
-        return res.status(403).json({
-          error: "Unauthorized"
-        });
-    }
-
-    res.json(products);
-
-  } catch (err) {
-    console.error("GET PRODUCTS ERROR:", err);
-    res.status(500).json({
-      error: "Failed to fetch products"
-    });
-  }
-});
 
 // Producer Application
 const storage = multer.diskStorage({
@@ -1076,6 +1130,22 @@ app.put("/producerApplications/:id/approve", verify, async (req, res) => {
 
     if (!application) {
       return res.status(404).json({ error: "Application not found" });
+    }
+
+    const user = await fetchOne(
+      appDB,
+      "SELECT id, role FROM users WHERE id = ?",
+      [application.userId]
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.role === "ADMIN") {
+      return res.status(400).json({
+        error: "Cannot downgrade an ADMIN user"
+      });
     }
 
     await execute(

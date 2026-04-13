@@ -31,13 +31,12 @@ export default function SignUp() {
 
             const data = await res.json();
 
-            if (data.success) {
+            if (data.success && data.token) {
                 localStorage.setItem("email", email);
-                if (data.token) {
-                    localStorage.setItem("token", data.token);
-                }
+                localStorage.setItem("token", data.token);
+            
                 setMessage("Registration successful! Redirecting...");
-                setTimeout(() => navigate("/profile"), 1500);
+                navigate("/profile", { replace: true });
             } else {
                 setMessage(data.message || "Registration failed.");
             }

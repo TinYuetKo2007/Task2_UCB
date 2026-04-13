@@ -20,7 +20,7 @@ export default function UsersTable() {
       setUsers(data.users);
       setLoading(false);
     } catch {
-      setErr("Error fetching username");
+      setErr("Error fetching email");
       setLoading(false);
     }
   };
@@ -36,7 +36,7 @@ export default function UsersTable() {
     <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
         <tr>
-          <th>Username</th>
+          <th>Email</th>
           <th>Role</th>
         </tr>
       </thead>
@@ -44,7 +44,7 @@ export default function UsersTable() {
       <tbody>
         {users?.map((user, index) => (
           <tr key={user._id || user.id || user.username || index}>
-            <td>{user.username}</td>
+            <td>{user.email}</td>
             <td>{user.role}</td>
           </tr>
         ))}

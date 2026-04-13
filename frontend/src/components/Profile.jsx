@@ -6,6 +6,17 @@ import default_image from "../image/default_image.png";
 export default function Profile () {
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+    
+        if (!token) {
+            setTimeout(() => {
+                navigate("/login", { replace: true });
+            }, 0);
+        }
+    }, [navigate]);
+
+
     const [email, setEmail] = useState("");
     const [forename, setForename] = useState("");
     const [surname, setSurname] = useState("");
@@ -15,10 +26,6 @@ export default function Profile () {
     const [err, setErr] = useState(null);
 
     const fetchUser = useCallback(async () => {
-        if (!localStorage.getItem("token")) {
-            return navigate("/login");
-        }
-
         try {
             setLoading(true);
 

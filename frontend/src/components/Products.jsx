@@ -18,21 +18,26 @@ export default function Products() {
   const [message, setMessage] = useState("");
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 8;
 
   useEffect(() => {
     async function loadProducts() {
       try {
 
+        const token = localStorage.getItem("token");
+
         const res = await fetch("http://localhost:4000/products", {
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token")
-          }
+          headers: token && token !== "null"
+            ? { Authorization: `Bearer ${token}` }
+            : {}
         });
 
         const data = await res.json();
 
         if (!res.ok) {
           console.error(data.error);
+          setProducts([]);
           return;
         }
 
@@ -68,13 +73,11 @@ export default function Products() {
       </>
     );
 
-  // Get unique categories
   const categories = [
     "All",
     ...new Set(products.map((p) => p.category))
   ];
 
-  // Filter products
   const filteredProducts = products.filter((product) => {
     if (product.title === "Delivery Fee") return false;
   
@@ -84,6 +87,13 @@ export default function Products() {
   
     return true;
   });
+  
+  const indexOfLast = currentPage * productsPerPage;
+  const indexOfFirst = indexOfLast - productsPerPage;
+  
+  const currentProducts = filteredProducts.slice(indexOfFirst, indexOfLast);
+  
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
   return (
     <div className="products-page">
@@ -115,7 +125,10 @@ export default function Products() {
               {categories.map((cat) => (
                 <li key={cat}>
                   <button
-                    onClick={() => setSelectedCategory(cat)}
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      setCurrentPage(1);
+                    }}
                     className={
                       selectedCategory === cat ? "active-category" : ""
                     }
@@ -130,7 +143,7 @@ export default function Products() {
 
           <div className="product-list">
             <ul className="products-grid">
-            {filteredProducts.map((product) => (
+            {currentProducts.map((product) => (
               <li
                 key={product.id}
                 className={`product-item ${product.stock === 0 ? "out-of-stock" : ""}`}
@@ -155,8 +168,28 @@ export default function Products() {
             ))}
             </ul>
           </div>
-
         </div>
+
+        <div className="pagination">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
+
       </div>
 
       <div className="basket-container">

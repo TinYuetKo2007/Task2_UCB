@@ -1,134 +1,160 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
+
 import UsersTable from "./UsersTable";
 import ProductsTable from "./ProductsTable";
 import MessagesTable from "./MessagesTable";
-import farm_food from "../../image/farm_food.jpg"
-import default_image from "../../image/default_image.png"
 import ApplicationsTable from "./ApplicationsTable";
+
+import farm_food from "../../image/farm_food.jpg";
+import default_image from "../../image/default_image.png";
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+
   const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
   const [err, setErr] = useState(null);
-  const fetchUser = useCallback(async () => {
-    if (!localStorage.getItem("token")) {
-      return navigate("/login");
+
+  const checkAdmin = useCallback(async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
     }
-    // Allows server to identify user
+
     try {
       setLoading(true);
+
       const res = await fetch("http://localhost:4000/me", {
         method: "GET",
         headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
+          Authorization: `Bearer ${token}`
+        }
       });
-      const user = await res.json();
-      console.log(user.role);
-      setUser(user);
+
+      const data = await res.json();
+
+      if (data.role === "ADMIN") {
+        setAuthorized(true);
+      } else {
+        setAuthorized(false);
+      }
+
       setLoading(false);
-    } catch {
-      setErr("Error fetching email");
+    } catch (e) {
+      setErr("Failed to load admin data");
       setLoading(false);
     }
   }, [navigate]);
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    checkAdmin();
+  }, [checkAdmin]);
+
+  const syncStripeProducts = async () => {
+    try {
+      await fetch("http://localhost:4000/sync-stripe-products", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      alert("Stripe products synced");
+    } catch (err) {
+      alert("Sync failed");
+    }
+  };
+
   if (loading) {
-    return (
-      <div>
-        <h1>Loading...</h1>
-      </div>
-    );
+    return <h1>Loading...</h1>;
   }
+
   if (err) {
     return <h1>{err}</h1>;
   }
-  if (user.role !== "ADMIN") {
-    return <h1>Not an admin: Access denied.</h1>;
-  }
 
-  const syncStripeProducts = async () => {
-    await fetch("http://localhost:4000/sync-stripe-products", {
-      method: "POST"
-    });
-  
-    alert("Stripe products synced");
-  };
+  if (!authorized) {
+    return <h1>Access denied (admin only)</h1>;
+  }
 
   return (
     <>
-    <div className='parent-container'>
-      <img src={farm_food}
-      onError={(e) => {
-        e.currentTarget.onerror = null;
-        e.currentTarget.src = default_image;
-      }} 
-      style={{
-      width: "100vw",
-    height: "170px",
-    objectFit: "cover",
-    filter: "brightness(50%)"
-      }}/>
-        <div className='bottom-left'>
-      <div className='main-title'>
-      <b><h2>Admin Dashboard</h2></b>
-      </div>
-    </div>
-  </div>
+      <div className="parent-container">
+        <img
+          src={farm_food}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = default_image;
+          }}
+          style={{
+            width: "100vw",
+            height: "170px",
+            objectFit: "cover",
+            filter: "brightness(50%)"
+          }}
+        />
 
-  <div className="admin-dashboard">
-    <div className="admin-layout">
-      
-      <div className="admin-section">
-        <div className="admin-header">
-          <h3>List of Users</h3>
-          <button className="edit-btn" onClick={() => navigate("/admin/edit/users")}>Edit</button>
+        <div className="bottom-left">
+          <div className="main-title">
+            <h2>Admin Dashboard</h2>
+          </div>
         </div>
-        <UsersTable />
       </div>
 
-      <div className="admin-section">
-        <div className="admin-header">
-          <h3>List of Products</h3>
-          <button className="edit-btn" onClick={() => navigate("/admin/edit/products")}>Edit</button>
+      <div className="admin-dashboard">
+        <div className="admin-layout">
+
+          <div className="admin-section">
+            <div className="admin-header">
+              <h3>Users</h3>
+              <button onClick={() => navigate("/admin/edit/users")}>Edit</button>
+            </div>
+            <UsersTable />
+          </div>
+
+          <div className="admin-section">
+            <div className="admin-header">
+              <h3>Products</h3>
+              <button onClick={() => navigate("/admin/edit/products")}>Edit</button>
+            </div>
+            <ProductsTable />
+          </div>
+
+          <div className="admin-section">
+            <div className="admin-header">
+              <h3>Messages</h3>
+              <button onClick={() => navigate("/admin/edit/contact-messages")}>Edit</button>
+            </div>
+            <MessagesTable />
+          </div>
+
+          <div className="admin-section">
+            <div className="admin-header">
+              <h3>Producer Applications</h3>
+              <button onClick={() => navigate("/admin/edit/producerApplications")}>Edit</button>
+            </div>
+            <ApplicationsTable />
+          </div>
+
         </div>
-        <ProductsTable />
-      </div>
 
-      <div className="admin-section">
-        <div className="admin-header">
-          <h3>List of Messages</h3>
-          <button className="edit-btn" onClick={() => navigate("/admin/edit/contact-messages")}>Edit</button>
+        <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+          <button onClick={() => navigate("add-product")}>
+            Add Product
+          </button>
+
+          <button onClick={() => navigate("reports")}>
+            Create report
+          </button>
+
+          <button onClick={syncStripeProducts}>
+            Sync Stripe Catalog
+          </button>
         </div>
-        <MessagesTable />
       </div>
-
-      <div className="admin-section">
-        <div className="admin-header">
-          <h3>List of Producer Applications</h3>
-          <button className="edit-btn" onClick={() => navigate("/admin/edit/producerApplications")}>Edit</button>
-        </div>
-        <ApplicationsTable />
-      </div>
-
-    </div>
-    <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "20px"}}>
-      <button className="report-btn"
-        onClick={() => navigate("add-product")}>
-        Add Product
-      </button>
-      <button className="report-btn" onClick={() => navigate("reports")}>
-        Create report
-      </button>
-      <button className="report-btn" onClick={syncStripeProducts}>
-    Sync Stripe Catalog
-    </button>
-  </div>
-  </div></>
-);
+    </>
+  );
 }

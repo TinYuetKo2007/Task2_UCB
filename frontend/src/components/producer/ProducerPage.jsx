@@ -1,19 +1,25 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
+
 import ProductsTable from "../admin/ProductsTable";
 import MessagesTable from "../admin/MessagesTable";
+
 import farm_food from "../../image/farm_food.jpg";
 import default_image from "../../image/default_image.png";
 
 export default function ProducerPage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+
+  const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
-  const fetchUser = useCallback(async () => {
-    if (!localStorage.getItem("token")) {
-      return navigate("/login");
+  const checkUser = useCallback(async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
     }
 
     try {
@@ -22,46 +28,45 @@ export default function ProducerPage() {
       const res = await fetch("http://localhost:4000/me", {
         method: "GET",
         headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
+          Authorization: `Bearer ${token}`
+        }
       });
 
-      const user = await res.json();
-      setUser(user);
-      setLoading(false);
+      const data = await res.json();
 
-    } catch {
+      setRole(data.role);
+
+      setLoading(false);
+    } catch (e) {
       setErr("Error fetching user");
       setLoading(false);
     }
   }, [navigate]);
 
-    const syncStripeProducts = async () => {
-    await fetch("http://localhost:4000/sync-stripe-products", {
-      method: "POST",
-      headers: {
-          Authorization: "Bearer " + localStorage.getItem("token")
+  useEffect(() => {
+    checkUser();
+  }, [checkUser]);
+
+  const syncStripeProducts = async () => {
+    try {
+      await fetch("http://localhost:4000/sync-stripe-products", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
         }
-    });
-  
-    alert("Stripe products synced");
+      });
+
+      alert("Stripe products synced");
+    } catch (err) {
+      alert("Sync failed");
+    }
   };
 
+  if (loading) return <h1>Loading...</h1>;
+  if (err) return <h1>{err}</h1>;
 
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  if (loading) {
-    return <h1>Loading...</h1>;
-  }
-
-  if (err) {
-    return <h1>{err}</h1>;
-  }
-
-  if (user.role !== "PRODUCER") {
-    return <h1>Not a producer: Access denied.</h1>;
+  if (role !== "ADMIN" && role !== "PRODUCER") {
+    return <h1>Access denied</h1>;
   }
 
   return (
@@ -83,7 +88,7 @@ export default function ProducerPage() {
 
         <div className="bottom-left">
           <div className="main-title">
-            <b><h2>Producer Dashboard</h2></b>
+            <h2>Producer Dashboard</h2>
           </div>
         </div>
       </div>
@@ -94,10 +99,7 @@ export default function ProducerPage() {
           <div className="admin-section">
             <div className="admin-header">
               <h3>My Products</h3>
-              <button
-                className="edit-btn"
-                onClick={() => navigate("/producer/edit/products")}
-              >
+              <button onClick={() => navigate("/producer/edit/products")}>
                 Edit
               </button>
             </div>
@@ -108,10 +110,7 @@ export default function ProducerPage() {
           <div className="admin-section">
             <div className="admin-header">
               <h3>Customer Messages</h3>
-              <button
-                className="edit-btn"
-                onClick={() => navigate("/producer/edit/contact-messages")}
-              >
+              <button onClick={() => navigate("/producer/edit/contact-messages")}>
                 Edit
               </button>
             </div>
@@ -121,26 +120,18 @@ export default function ProducerPage() {
 
         </div>
 
-        <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "20px"}}>
-          
-          <button
-            className="report-btn"
-            onClick={() => navigate("add-product")}
-          >
+        <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+          <button onClick={() => navigate("add-product")}>
             Add Product
           </button>
 
-          <button
-            className="report-btn"
-            onClick={() => navigate("reports")}
-          >
+          <button onClick={() => navigate("reports")}>
             Create report
           </button>
 
-          <button className="report-btn" onClick={syncStripeProducts}>
-          Sync Stripe Catalog
+          <button onClick={syncStripeProducts}>
+            Sync Stripe Catalog
           </button>
-
         </div>
       </div>
     </>

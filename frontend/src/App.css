@@ -571,13 +571,27 @@ button:hover {
 
 .out-of-stock {
   opacity: 0.6;
-  pointer-events: none; /* prevents clicking */
+  pointer-events: none;
 }
 
 .stock-label {
   color: red;
   font-weight: bold;
   display: block;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+  color: #000;
+}
+
+.pagination button {
+  padding: 8px 12px;
+  cursor: pointer;
 }
 
 /*Orders table*/
@@ -942,6 +956,10 @@ body.dark-mode {
 .dark-mode .form fieldset input,
 .dark-mode .form textarea{
   background-color: #000;
+  color: #fff;
+}
+
+.dark-mode .pagination {
   color: #fff;
 }
 

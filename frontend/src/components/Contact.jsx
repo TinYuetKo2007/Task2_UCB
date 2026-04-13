@@ -12,7 +12,7 @@ function Contact() {
         try {
             const res = await axios.post(
                 "http://localhost:4000/contact-messages",
-                { email, text }   // no token
+                { email, text }
             );
 
             if (res.data.success) {
