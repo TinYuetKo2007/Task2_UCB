@@ -3,8 +3,8 @@ const API = "http://localhost:5173";
 import veggie_field from "./image/veggie_field.jpg"
 
 function App() {
-  const username = localStorage.getItem("username")
-  console.log("username", username)
+  const email = localStorage.getItem("email")
+  console.log("email", email)
 
 
   return (

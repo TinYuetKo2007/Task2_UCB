@@ -85,79 +85,66 @@ app.post("/login", (req, res) => {
   });
 
 
-app.post("/create-checkout-session", async (req, res) => {
-  try {
-    const { basket, address, deliveryMethod } = req.body;
-
-    if (!basket || basket.length === 0) {
-      return res.status(400).json({ error: "Basket is empty" });
-    }
-
-    const preparedBasket = basket.map(item => ({
-      id: item.id,
-      productId: item.productId,
-      title: item.title || "Item",
-      price: item.price,
-      image: item.image || "",
-      quantity: item.quantity || 1
-    }));
-
-    if (deliveryMethod === "delivery") {
-
-      const deliveryProduct = await fetchOne(
-        appDB,
-        "SELECT * FROM products WHERE title = ?",
-        ["Delivery Fee"]
-      );
-
-      if (!deliveryProduct) {
-        return res.status(400).json({ error: "Delivery fee not found" });
+  app.post("/create-checkout-session", verify, async (req, res) => {
+    try {
+      const { basket, address, deliveryMethod } = req.body;
+  
+      if (!basket || basket.length === 0) {
+        return res.status(400).json({ error: "Basket is empty" });
+      }
+  
+      const preparedBasket = basket.map(item => ({
+        productId: item.productId,
+        title: item.title,
+        price: item.price,
+        image: item.image || "",
+        quantity: item.quantity || 1
+      }));
+  
+      const lineItems = preparedBasket.map(item => ({
+        price_data: {
+          currency: "gbp",
+          product_data: {
+            name: item.title,
+            images: item.image ? [item.image] : []
+          },
+          unit_amount: Math.round(item.price * 100)
+        },
+        quantity: item.quantity
+      }));
+      
+      if (deliveryMethod === "delivery") {
+        lineItems.push({
+          price_data: {
+            currency: "gbp",
+            product_data: {
+              name: "Delivery Fee"
+            },
+            unit_amount: 300
+          },
+          quantity: 1
+        });
       }
 
-      preparedBasket.push({
-        id: deliveryProduct.id,
-        productId: deliveryProduct.productId,
-        title: deliveryProduct.title,
-        price: deliveryProduct.price,
-        image: deliveryProduct.image || "",
-        quantity: 1
-      });
-    }
-
-    const lineItems = preparedBasket.map(item => ({
-      price_data: {
-        currency: "gbp",
-        product_data: {
-          name: item.title,
-          images: item.image ? [item.image] : []
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: lineItems,
+        mode: "payment",
+        metadata: {
+          address: address || "collection",
+          deliveryMethod
         },
-        unit_amount: Math.round(item.price * 100)
-      },
-      quantity: item.quantity
-    }));
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: lineItems,
-      mode: "payment",
-      metadata: {
-        basket: JSON.stringify(preparedBasket),
-        address: address || "collection",
-        deliveryMethod
-      },
-      success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL}/basket`
-    });
-
-    console.log("Basket sent to Stripe:", preparedBasket);
-
-    res.json({ url: session.url });
-
-  } catch (err) {
-    console.error("CREATE CHECKOUT ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+        success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.CLIENT_URL}/basket`
+      });
+  
+      res.json({ url: session.url });
+  
+    } catch (err) {
+      console.error("CREATE CHECKOUT ERROR:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
 
 app.post("/contact-messages", async (req, res) => {
   const { email, text } = req.body;
@@ -349,7 +336,7 @@ app.post("/sync-stripe-products", verify, async (req, res) => {
           price.id,
           product.id,
           product.images?.[0] || "",
-          product.metadata?.category || "general",
+          product.metadata?.category || "General",
           0,
           req.user.id
         ]
@@ -546,125 +533,110 @@ app.put("/users/me", verify, async (req, res) => {
 
 app.get("/me/orders", verify, async (req, res) => {
   try {
-
     const rows = await fetchAll(
       appDB,
       `
-      SELECT 
-        orders.id as orderId,
-        orders.total,
-        orders.deliveryMethod,
-        orders.address,
-        orders.status,
-        orders.createdAt,
+        SELECT 
+          orders.id as orderId,
+          orders.total,
+          orders.deliveryMethod,
+          orders.address,
+          orders.status,
+          orders.createdAt,
 
-        orderProducts.productId,
-        orderProducts.title,
-        orderProducts.image,
-        orderProducts.price,
-        orderProducts.quantity
+          orderProducts.productId,
+          orderProducts.quantity,
+          orderProducts.price,
 
-      FROM orders
+          COALESCE(products.title, orderProducts.title) as title,
+          COALESCE(products.image, orderProducts.image) as image
 
-      LEFT JOIN orderProducts
-      ON orders.id = orderProducts.orderId
-
-      WHERE orders.userId = ?
-
-      ORDER BY orders.createdAt DESC
+        FROM orders
+        LEFT JOIN orderProducts
+          ON orders.id = orderProducts.orderId
+        LEFT JOIN products
+          ON products.productId = orderProducts.productId
+        WHERE orders.userId = ?
+        ORDER BY orders.createdAt DESC
       `,
       [req.user.id]
     );
 
-    res.json(rows);
+    res.json(rows || []);
 
   } catch (err) {
     console.error("ORDERS FETCH ERROR:", err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json([]);
   }
 });
 
 app.post("/orders/store", verify, async (req, res) => {
-  console.log("STORE ORDER HIT", req.body);
-
   try {
     const { sessionId } = req.body;
 
-    if (!sessionId)
-      return res.status(400).json({ error: "No session ID" });
-
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    if (!session)
-      return res.status(400).json({ error: "Session not found" });
-
-    if (session.payment_status !== "paid")
-      return res.status(400).json({ error: "Payment not completed" });
-
-    let basket = [];
-
-    try {
-      basket = session.metadata.basket
-        ? JSON.parse(session.metadata.basket)
-        : [];
-    } catch (err) {
-      console.log("Basket parse error:", err);
-      return res.status(400).json({ error: "Invalid basket data" });
+    if (!session || session.payment_status !== "paid") {
+      return res.status(400).json({ error: "Invalid session" });
     }
 
-    const address = session.metadata.address || "";
-    const deliveryMethod = session.metadata.deliveryMethod || "collection";
+    const lineItems = await stripe.checkout.sessions.listLineItems(sessionId);
 
     const order = await execute(
       appDB,
-      `INSERT INTO orders 
-       (userId, deliveryMethod, address, stripeSessionId, total, status)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        req.user.id,
-        deliveryMethod,
-        address,
-        session.id,
-        session.amount_total / 100,
-        "paid"
-      ]
+      `INSERT INTO orders (userId, total, status)
+       VALUES (?, ?, ?)`,
+      [req.user.id, session.amount_total / 100, "paid"]
     );
 
     const orderId = order.lastID;
 
- for (const item of basket) {
+    for (const item of lineItems.data) {
 
-      console.log("Processing item:", item);
-
+      const title = item.description;
+    
+      const isDeliveryFee = title === "Delivery Fee";
+    
+      const deliveryImage = "/images/delivery.png";
+    
+      const unitPrice = item.amount_total / item.quantity / 100;
+    
+      let product = null;
+    
+      if (!isDeliveryFee) {
+        product = await fetchOne(
+          appDB,
+          "SELECT * FROM products WHERE title = ?",
+          [title]
+        );
+    
+        if (product) {
+          await updateStock(product.productId, -item.quantity);
+        }
+      }
+    
       await execute(
         appDB,
         `INSERT INTO orderProducts
-        (orderId, productId, quantity, price, title, image)
-        VALUES (?, ?, ?, ?, ?, ?)`,
+         (orderId, productId, quantity, price, title, image)
+         VALUES (?, ?, ?, ?, ?, ?)`,
         [
           orderId,
-          item.productId,
+          product ? product.productId : null,
           item.quantity,
-          item.price,
-          item.title,
-          item.image
+          unitPrice,
+          title,
+          isDeliveryFee ? deliveryImage : (product?.image || null)
         ]
       );
-
-      // skip delivery fee
-      if (item.title === "Delivery Fee") continue;
-
-      // decrease stock using DB id
-      await updateStock(item.id, -item.quantity);
-
     }
 
-        res.json({ success: true, orderId });
+    res.json({ success: true, orderId });
 
-      } catch (err) {
-        console.error("STORE ORDER ERROR:", err);
-        res.status(500).json({ error: "Server error" });
-      }
+  } catch (err) {
+    console.error("ORDER STORE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // only work for admins
@@ -870,7 +842,6 @@ app.put("/:type/:id", verify, async (req, res) => {
 
     let finalPriceId = product.priceId;
 
-    // Only create new Stripe price if price changed
     if (product.productId && Number(price) !== Number(product.price)) {
       try {
         const newPrice = await stripe.prices.create({
@@ -961,7 +932,8 @@ app.get("/products", verify, async (req, res) => {
       case "ADMIN":
         products = await fetchAll(
           appDB,
-          `SELECT * FROM products`
+          `SELECT * FROM products
+           WHERE title != 'Delivery Fee'`
         );
         break;
 
@@ -983,13 +955,10 @@ app.get("/products", verify, async (req, res) => {
     res.json(products);
 
   } catch (err) {
-
     console.error("GET PRODUCTS ERROR:", err);
-
     res.status(500).json({
       error: "Failed to fetch products"
     });
-
   }
 });
 

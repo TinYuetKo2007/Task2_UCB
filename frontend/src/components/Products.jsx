@@ -75,12 +75,15 @@ export default function Products() {
   ];
 
   // Filter products
-  const filteredProducts =
-    selectedCategory === "All"
-      ? products
-      : products.filter(
-          (product) => product.category === selectedCategory
-        );
+  const filteredProducts = products.filter((product) => {
+    if (product.title === "Delivery Fee") return false;
+  
+    if (selectedCategory !== "All") {
+      return product.category === selectedCategory;
+    }
+  
+    return true;
+  });
 
   return (
     <div className="products-page">

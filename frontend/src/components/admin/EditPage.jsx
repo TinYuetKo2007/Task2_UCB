@@ -147,18 +147,17 @@ const fetchData = useCallback(async () => {
     setEditForm(item);
     }
 
-  if (loading) return <h1>Loading...</h1>;
-  if (err) return <h1>{err}</h1>;
-  if (!user) return <h1>Access denied.</h1>;
-
-  if (user.role === "PRODUCER" && type !== "products") {
-    return <h1>Access denied.</h1>;
-  }
-
-  if (user.role === "ADMIN" && type === "products") {
-    return <h1>Access denied.</h1>;
-  }
-
+    if (loading) return <h1>Loading...</h1>;
+    if (err) return <h1>{err}</h1>;
+    if (!user) return <h1>Access denied.</h1>;
+    
+    if (user.role === "PRODUCER" && type !== "products") {
+      return <h1>Access denied.</h1>;
+    }
+    
+    if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
+      return <h1>Access denied.</h1>;
+    }
 
   async function saveEdit() {
   try {
