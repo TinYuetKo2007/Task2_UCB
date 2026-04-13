@@ -5,6 +5,7 @@ import ProductsTable from "./ProductsTable";
 import MessagesTable from "./MessagesTable";
 import farm_food from "../../image/farm_food.jpg"
 import default_image from "../../image/default_image.png"
+import ApplicationsTable from "./ApplicationsTable";
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function AdminPage() {
       setUser(user);
       setLoading(false);
     } catch {
-      setErr("Error fetching username");
+      setErr("Error fetching email");
       setLoading(false);
     }
   }, [navigate]);
@@ -98,16 +99,25 @@ export default function AdminPage() {
         </div>
         <ProductsTable />
       </div>
+
       <div className="admin-section">
         <div className="admin-header">
           <h3>List of Messages</h3>
-          <button className="edit-btn" onClick={() => navigate("/admin/edit/contactMessages")}>Edit</button>
+          <button className="edit-btn" onClick={() => navigate("/admin/edit/contact-messages")}>Edit</button>
         </div>
         <MessagesTable />
       </div>
 
+      <div className="admin-section">
+        <div className="admin-header">
+          <h3>List of Producer Applications</h3>
+          <button className="edit-btn" onClick={() => navigate("/admin/edit/producerApplications")}>Edit</button>
+        </div>
+        <ApplicationsTable />
+      </div>
+
     </div>
-    <div style={{display: "flex", gap: "10px", alignItems: "center"}}>
+    <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "20px"}}>
       <button className="report-btn"
         onClick={() => navigate("add-product")}>
         Add Product

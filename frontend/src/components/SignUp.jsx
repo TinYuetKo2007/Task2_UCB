@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 export default function SignUp() {
-    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
     const [forename, setForename] = useState("");
     const [surname, setSurname] = useState("")
     const [password, setPassword] = useState("");
@@ -13,8 +13,8 @@ export default function SignUp() {
  const handleRegister = async (e) => {
         e.preventDefault();
 
-        if (!username || !forename || !surname || !password) {
-            setMessage("Please enter username and password.");
+        if (!forename || !surname || !email || !password) {
+            setMessage("Please enter all details.");
             return;
         }
         if (password.length < 8) {
@@ -26,13 +26,13 @@ export default function SignUp() {
             const res = await fetch("http://localhost:4000/signup", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, forename, surname, password }),
+                body: JSON.stringify({ forename, surname, email, password }),
             });
 
             const data = await res.json();
 
             if (data.success) {
-                localStorage.setItem("username", username);
+                localStorage.setItem("email", email);
                 if (data.token) {
                     localStorage.setItem("token", data.token);
                 }
@@ -49,14 +49,9 @@ export default function SignUp() {
     return (
         <div className="container" style={{ height: "100vh"}}>
             <div className="form-container">
+                <button onClick={() => navigate("/")}>Go Back</button>
                     <form className="form" onSubmit={handleRegister}>
-                    <button onClick={() => navigate("/")}>Go Back</button>
                     <h1>Sign Up</h1>
-                    <input 
-                    type="text" 
-                    placeholder="Username" 
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}/>
                     <div style={{display:"flex", flexDirection: "row"}}>
                         <input 
                         type="text" 
@@ -73,6 +68,11 @@ export default function SignUp() {
                         className="name-input"/>
                     </div>
                     <input 
+                    type="email" 
+                    placeholder="Email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}/>
+                    <input
                     type="password" 
                     placeholder="Password" 
                     value={password}

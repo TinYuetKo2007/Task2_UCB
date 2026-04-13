@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
@@ -16,13 +16,13 @@ export default function Login() {
     const res = await fetch("http://localhost:4000/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
      if (data.success) {
       setMessage("Login successful!");
-      // ✅ redirect to dashboard after 1 second
-      localStorage.setItem('username', username);
+
+      localStorage.setItem('email', email);
       localStorage.setItem('token', data.token);
       setTimeout(() => navigate("/profile"), 1000);
     } else {
@@ -33,15 +33,15 @@ export default function Login() {
     return (
         <div className="container" style={{ height: "100vh"}}>
             <div className="form-container">
+              <button onClick= {() => navigate("/")}>Go Back</button>
                     <form className="form" onSubmit={handleLogin}>
-                        <button onClick= {() => navigate("/")}>Go Back</button>
                         <h1>Login</h1>
                         <input 
                         required
-                        type="text" 
-                        placeholder="Username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        type="email" 
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         />
                         <input 
                         required
@@ -49,7 +49,9 @@ export default function Login() {
                         placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}/>
-                        <a href="#">Forgot Password?</a>
+                        <Link to="/forgot-password">
+                          Forgot Password?
+                        </Link>
                         <button type="submit">Log In</button>
                         <p>Not a member? <Link to="/signup">Sign Up</Link></p>
                         {message && <p className="login-message">{message}</p>}

@@ -4,7 +4,7 @@ export default function ProductsTable() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    async function loadProducts() {
+    async function fetchProducts() {
       try {
   
         // Sync Stripe products first
@@ -16,7 +16,11 @@ export default function ProductsTable() {
         });
   
         // Then fetch products from DB
-        const res = await fetch("http://localhost:4000/products");
+        const res = await fetch("http://localhost:4000/products", {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+          }
+        });
         const data = await res.json();
   
         console.log("Products:", data);
@@ -30,7 +34,7 @@ export default function ProductsTable() {
       }
     }
   
-    loadProducts();
+    fetchProducts();
   }, []);
 
   return (

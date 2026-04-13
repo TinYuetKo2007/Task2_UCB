@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 export default function MessagesTable() {
-  const [contactMessages, setContactMessages] = useState(null);
+  const [contactMessages, setContactMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
@@ -17,10 +17,22 @@ export default function MessagesTable() {
       });
 
       const data = await res.json();
-      setContactMessages(data.contactMessages);
+
+      console.log("API response:", data);
+
+      // handle both formats
+      if (Array.isArray(data)) {
+        setContactMessages(data);
+      } else if (Array.isArray(data.contactMessages)) {
+        setContactMessages(data.contactMessages);
+      } else {
+        setContactMessages([]);
+      }
+
       setLoading(false);
-    } catch {
-      setErr("Error fetching email");
+    } catch (error) {
+      console.error(error);
+      setErr("Error fetching messages");
       setLoading(false);
     }
   };
@@ -38,14 +50,16 @@ export default function MessagesTable() {
         <tr>
           <th>Email</th>
           <th>Message</th>
+          <th>Date</th>
         </tr>
       </thead>
 
       <tbody>
-        {contactMessages?.map((contactMessage, index) => (
-          <tr key={contactMessage._id || contactMessage.id || index}>
-            <td>{contactMessage.email}</td>
-            <td>{contactMessage.text}</td>
+        {contactMessages.map((msg) => (
+          <tr key={msg.id}>
+            <td>{msg.email}</td>
+            <td>{msg.text}</td>
+            <td>{msg.date}</td>
           </tr>
         ))}
       </tbody>

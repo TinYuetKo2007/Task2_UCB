@@ -9,8 +9,9 @@ export default function EditPage() {
   const [err, setErr] = useState(null);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
-  // 1. Define all logic/hooks first
   const fetchUser = useCallback(async () => {
     if (!localStorage.getItem("token")) {
       return navigate("/login");
@@ -28,42 +29,93 @@ export default function EditPage() {
       setLoading(false);
     }
   }, [navigate]);
+  
+    const approveApplication = async (id) => {
+      try {
+        const res = await fetch(
+          `http://localhost:4000/producerApplications/${id}/approve`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+          }
+        );
 
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await fetch(`http://localhost:4000/${type}`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") },
-      });
-      const result = await res.json();
+        const result = await res.json();
 
-      if (Array.isArray(result)) setData(result);
-      else if (Array.isArray(result.users)) setData(result.users);
-      else if (Array.isArray(result.products)) setData(result.products);
-      else if (Array.isArray(result.data)) setData(result.data);
-      else setData([]);
-    } catch (error) {
-      console.error("Fetch data error:", error);
+        if (res.ok) {
+          alert("Application approved");
+          fetchData();
+        } else {
+          alert(result.error);
+        }
+
+      } catch (error) {
+        console.error(error);
+        alert("Failed to approve application");
+      }
+    };
+
+const fetchData = useCallback(async () => {
+  try {
+    console.log("Fetching:", type);
+
+    const res = await fetch(`http://localhost:4000/${type}`, {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token"),
+      },
+    });
+
+    if (!res.ok) {
+      console.log("Route error:", res.status);
+      setData([]);
+      return;
     }
-  }, [type]);
 
-  // 2. Run Effects
+    const result = await res.json();
+    console.log("API RESULT:", result);
+
+    // if backend returns array
+    if (Array.isArray(result)) {
+      setData(result);
+      return;
+    }
+
+    // if backend returns object
+    setData(
+      result.users ||
+      result.products ||
+      result.messages ||
+      result.applications ||
+      result.data ||
+      []
+    );
+
+  } catch (error) {
+    console.error("Fetch data error:", error);
+    setData([]);
+  }
+}, [type]);
+
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
 
   useEffect(() => {
-    // Only fetch data if the user is verified as an ADMIN
-    if (user?.role === "ADMIN") {
+    if (
+  user?.role === "ADMIN" ||
+  (user?.role === "PRODUCER" && type === "products")
+) {
       fetchData();
     }
-  }, [fetchData, user]);
+  }, [fetchData, user, type]);
 
   async function deleteItem(id) {
     const dialog = document.getElementById('confirmDialog');
     const confirmBtn = document.getElementById('confirmBtn');
     const cancelBtn = document.getElementById('cancelBtn');
   
-    // Open the styled modal
     dialog.showModal();
   
     const confirmed = await new Promise((resolve) => {
@@ -79,55 +131,250 @@ export default function EditPage() {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") },
       });
       fetchData(); 
-    } catch (error) {
+    } catch {
       alert("Delete failed");
     }
   }
+  function handleChange(e) {
+  setEditForm({
+    ...editForm,
+    [e.target.name]: e.target.value
+  });
+}
+
+  function startEdit(item) {
+    setEditingId(item.id);
+    setEditForm(item);
+    }
 
   if (loading) return <h1>Loading...</h1>;
   if (err) return <h1>{err}</h1>;
-  if (!user || user.role !== "ADMIN") return <h1>Access denied.</h1>;
+  if (!user) return <h1>Access denied.</h1>;
+
+  if (user.role === "PRODUCER" && type !== "products") {
+    return <h1>Access denied.</h1>;
+  }
+
+  if (user.role === "ADMIN" && type === "products") {
+    return <h1>Access denied.</h1>;
+  }
+
+
+  async function saveEdit() {
+  try {
+    await fetch(`http://localhost:4000/${type}/${editingId}`, {
+      method: "PUT", // or PATCH
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
+      },
+      body: JSON.stringify(editForm)
+    });
+
+    setEditingId(null);
+    fetchData();
+
+  } catch {
+    alert("Update failed");
+  }
+}
 
   return (
     <div className="edit-page">
       <div className="admin-header">
         <button onClick={() => navigate(-1)}>Back</button>
       </div>
-      <h1>Edit {type}</h1>
+      <h1>
+        {user.role === "PRODUCER"
+          ? "Edit My Products"
+          : `Edit ${type}`}
+      </h1>
       <table>
         <thead>
           <tr>
             {type === "users" ? (
-              <><th>Username</th><th>Balance</th><th>Action</th></>
-            ) : (
-              <><th>Product</th><th>Price</th><th>Action</th></>
-            )}
+                <><th>Email</th><th>Balance</th><th>Action</th></>
+              ) : type === "contact-messages" ? (
+                <><th>Email</th><th>Message</th><th>Date</th><th>Action</th></>
+              ) : type === "producerApplications" ? (
+                  <>
+                    <th>Email</th><th>Producer Name</th><th>Address</th>
+                    <th>Description</th><th>Status</th><th>Action</th>
+                  </>
+                ) : (
+                <><th>Product</th><th>Price</th><th>Stock</th><th>Description</th><th>Action</th></>
+              )}
           </tr>
         </thead>
-        <tbody>
-          {data.map(item => (
-            <tr key={item.id}>
-              {type === "users" ? (
-                <><td>{item.username}</td><td>£{item.balance}</td></>
-              ) : (
-                <><td>{item.title}</td><td>£{item.price}</td></>
-              )}
-              <td>
-              <button>Edit</button>
+    <tbody>
+      {data.map(item => (
+        <tr key={item.id}>
+
+          {editingId === item.id ? (
+
+            type === "users" ? (
+              <>
+                <td>
+                  <input
+                    name="email"
+                    value={editForm.email}
+                    onChange={handleChange}
+                  />
+                </td>
+
+                <td>
+                  <input
+                    name="balance"
+                    value={editForm.balance}
+                    onChange={handleChange}
+                  />
+                </td>
+              </>
+            )
+
+            : type === "contact-messages" ? (
+              <>
+                <td>
+                  <input
+                    name="email"
+                    value={editForm.email}
+                    onChange={handleChange}
+                  />
+                </td>
+
+                <td>
+                  <input
+                    name="text"
+                    value={editForm.text}
+                    onChange={handleChange}
+                  />
+                </td>
+
+                <td>
+                  <input
+                    name="date"
+                    value={editForm.date}
+                    onChange={handleChange}
+                  />
+                </td>
+              </>
+            )
+
+            : type === "products" ? (
+              <>
+                <td>
+                  <input
+                    name="title"
+                    value={editForm.title}
+                    onChange={handleChange}
+                  />
+                </td>
+
+                <td>
+                  <input
+                    name="price"
+                    value={editForm.price}
+                    onChange={handleChange}
+                  />
+                </td>
+                
+                <td>
+                  <input
+                    name="stock"
+                    value={editForm.stock}
+                    onChange={handleChange}
+                  />
+                </td>
+
+                <td>
+                  <input
+                    name="description"
+                    value={editForm.description}
+                    onChange={handleChange}
+                  />
+                </td>
+              </>
+            )
+
+            : null
+
+          ) : (
+
+            type === "users" ? (
+              <>
+                <td>{item.email}</td>
+                <td>£{item.balance}</td>
+              </>
+            )
+
+            : type === "contact-messages" ? (
+              <>
+                <td>{item.email}</td>
+                <td>{item.text}</td>
+                <td>{item.date}</td>
+              </>
+            )
+
+            : type === "producerApplications" ? (
+              <>
+                <td>{item.email}</td>
+                <td>{item.producerName}</td>
+                <td>{item.address}</td>
+                <td>{item.description}</td>
+                <td>{item.status}</td>
+              </>
+            )
+
+            : (
+              <>
+                <td>{item.title}</td>
+                <td>£{item.price}</td>
+                <td>{item.stock}</td>
+                <td>{item.description}</td>
+              </>
+            )
+
+          )}
+
+          <td>
+
+            {editingId === item.id ? (
+              <>
+                <button onClick={saveEdit}>Save</button>
+                <button onClick={() => setEditingId(null)}>Cancel</button>
+              </>
+            ) : type === "producerApplications" ? (
+              <>
+                <button onClick={() => approveApplication(item.id)}>
+                  Approve
+                </button>
+
+                <button onClick={() => deleteItem(item.id)}>
+                  Reject
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => startEdit(item)}>Edit</button>
                 <button onClick={() => deleteItem(item.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+              </>
+            )}
+
+          </td>
+
+        </tr>
+      ))}
+    </tbody>
+
       </table>
-      <dialog id="confirmDialog" class="custom-modal">
-        <div class="modal-content">
-          <h3>Are you sure?</h3>
+      <dialog id="confirmDialog" className="custom-modal">
+        <div className="modal-content">
+          <h3>Are you sure you want to delete?</h3>
           <p>This action cannot be undone.</p>
-          <div class="modal-buttons" style={{display: "flex",
+          <div className="modal-buttons" style={{display: "flex",
             gap: "20px"}}>
-            <button id="cancelBtn" class="btn-secondary">Cancel</button>
-            <button id="confirmBtn" class="btn-danger">Delete</button>
+            <button id="cancelBtn" className="btn-secondary">Cancel</button>
+            <button id="confirmBtn" className="btn-danger">Delete</button>
           </div>
         </div>
       </dialog>

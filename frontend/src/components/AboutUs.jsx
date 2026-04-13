@@ -1,4 +1,5 @@
 import veggie_field from "../image/veggie_field.jpg"
+
 function AboutUs() {
   return (
     <div>

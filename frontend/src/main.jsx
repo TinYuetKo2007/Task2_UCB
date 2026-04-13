@@ -10,7 +10,7 @@ import Profile from './components/Profile.jsx'
 import AboutUs from './components/AboutUs.jsx'
 import Products from './components/Products.jsx'
 import ProductPage from './components/ProductPage.jsx'
-import Reports from './components/Reports.jsx'
+import Reports from './components/admin/Reports.jsx'
 import AdminPage from './components/admin/AdminPage.jsx'
 import AddProduct from './components/admin/AddProduct.jsx'
 import EditPage from './components/admin/EditPage.jsx'
@@ -18,11 +18,18 @@ import { BasketProvider } from "./BasketContext";
 import Basket from './components/Basket.jsx'
 import BasketSuccess from "./components/BasketSuccess";
 import ProfileSettings from './components/ProfileSettings.jsx'
+import ForgotPassword from './components/ForgotPassword.jsx'
+import ResetPassword from './components/ResetPassword.jsx'
+import ApplyForProducer from './components/ApplyForProducer.jsx'
+import PurchaseSuccess from './components/PurchaseSuccess.jsx'
+import ProducerPage from './components/producer/ProducerPage.jsx'
 
 // Links
 export const routeConfig = [
   { path: "/login", element: <Login /> },
   { path: "/signup", element: <SignUp /> },
+  { path:"/forgot-password", element:<ForgotPassword /> },
+  { path: "/reset-password/:token", element:<ResetPassword /> },
 
   {
     path: "/",
@@ -31,13 +38,22 @@ export const routeConfig = [
       { index: true, element: <App />, name: "Home" },
       { path: "basket", element: <Basket /> },
       { path: "profile", element: <Profile />, name: "Profile" },
+      { path: "apply-for-producer", element: <ApplyForProducer />, name: "Producer Application Form" },
       { path: "settings", element: <ProfileSettings />, name: "Settings" },
       { path: "contact", element: <Contact />, name: "Contact Page" },
       { path: "aboutus", element: <AboutUs />, name: "About Us" },
+      { path:"/purchase-success", element: <PurchaseSuccess/>},
       { path: "basket-success", element: <BasketSuccess />, searchable: false,},
 
       { path: "admin", children: [
         {index: true, element: <AdminPage />, searchable: false,},
+        {path: "add-product", element: <AddProduct />, searchable: false,},
+        {path: "edit/:type", element: <EditPage />, searchable: false},
+        {path: "reports", element: <Reports />, searchable: false},
+      ]},
+
+      { path: "producer", children: [
+        {index: true, element: <ProducerPage />, searchable: false,},
         {path: "add-product", element: <AddProduct />, searchable: false,},
         {path: "edit/:type", element: <EditPage />, searchable: false},
         {path: "reports", element: <Reports />, searchable: false},

@@ -1,17 +1,18 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useCallback, useMemo } from "react";
 
 const BasketContext = createContext();
 
 export function BasketProvider({ children }) {
   const [basket, setBasket] = useState([]);
 
-  function addToBasket(product) {
+  const addToBasket = useCallback((product) => {
     const token = localStorage.getItem("token");
 
     if (!token) {
       alert("Please login first");
       return;
     }
+
     setBasket(prev => {
       const exists = prev.find(item => item.id === product.id);
 
@@ -23,27 +24,37 @@ export function BasketProvider({ children }) {
         );
       }
 
-      return [...prev, { ...product, quantity: 1 }];
+      return [
+        ...prev,
+        {
+          id: product.id,
+          productId: product.id,  // always SQLite ID
+          title: product.title,
+          price: product.price,
+          image: product.image,
+          quantity: 1
+        }
+      ];
     });
-  }
+  }, []);
 
-  function removeFromBasket(id) {
+  const removeFromBasket = useCallback((id) => {
     setBasket(prev => prev.filter(item => item.id !== id));
-  }
+  }, []);
 
-  function clearBasket() {
+  const clearBasket = useCallback(() => {
     setBasket([]);
-  }
+  }, []);
+
+  const value = useMemo(() => ({
+    basket,
+    addToBasket,
+    removeFromBasket,
+    clearBasket
+  }), [basket, addToBasket, removeFromBasket, clearBasket]);
 
   return (
-    <BasketContext.Provider
-      value={{
-        basket,
-        addToBasket,
-        removeFromBasket,
-        clearBasket
-      }}
-    >
+    <BasketContext.Provider value={value}>
       {children}
     </BasketContext.Provider>
   );

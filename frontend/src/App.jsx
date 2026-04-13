@@ -1,6 +1,6 @@
 import './App.css'
 const API = "http://localhost:5173";
-import farm_food from "./image/farm_food.jpg"
+import veggie_field from "./image/veggie_field.jpg"
 
 function App() {
   const username = localStorage.getItem("username")
@@ -10,7 +10,7 @@ function App() {
   return (
     <div>
     <div className='parent-container'>
-    <img src={farm_food} style={{
+    <img src={veggie_field} style={{
       width: "100vw",
     height: "600px",
     objectFit: "cover",
@@ -32,10 +32,19 @@ function App() {
       <li>Learn more about the benefits of buying from local sources</li><br/>
     </ul>
     </div>
-    <div className='second-section'>
-    <h1>What Our Customers Say</h1>
-    <h2>"Lorem ipsum"</h2>
-    <p>- John Smith</p>
+    <div className="second-section">
+      <h1>What Our Customers Say</h1>
+
+      <div className="testimonial-card">
+        <p className="testimonial-text">
+          "The food quality is amazing and delivery is always fast. I highly recommend this service!"
+        </p>
+
+        <div className="testimonial-author">
+          <span className="author-name">John Smith</span>
+          <span className="author-role">Verified Customer</span>
+        </div>
+      </div>
     </div>
     
     </div>

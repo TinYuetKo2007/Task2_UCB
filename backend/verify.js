@@ -1,20 +1,39 @@
-//const jwt = require("jsonwebtoken");
-import jwt from "jsonwebtoken"
-// Middleware
+import jwt from "jsonwebtoken";
+
 export const verify = (req, res, next) => {
-    const auth = req.header('Authorization');
-    if (!auth)
-        return res.status(401).json({error: 'Access denied!!!'})
-    //Check for value of token
-    let token = auth.split(' ')[1];
-    if (!token)
-        return res.status(401).json({error: 'Access denied!!!'})
-    try {
-        const verify = jwt.verify(token, process.env.JWT_SECRET_KEY);
-        req.user = verify;
-        next()
-    } catch (err) {
-        console.log(err)
-        return res.status(400).json({error: 'Invalid token!!!'})
+
+    const auth = req.header("Authorization");
+    if (!auth) {
+        return res.status(401).json({
+            error: "Access denied: No Authorization header"
+        });
     }
-}
+
+    const parts = auth.split(" ");
+    if (parts.length !== 2) {
+        return res.status(401).json({
+            error: "Invalid Authorization format"
+        });
+    }
+
+    const token = parts[1];
+    if (!token || token === "null" || token === "undefined") {
+        return res.status(401).json({
+            error: "Invalid token"
+        });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        req.user = decoded;
+
+        next();
+
+    } catch (err) {
+
+        console.log("JWT ERROR:", err.message);
+        return res.status(401).json({
+            error: "Invalid or expired token"
+        });
+    }
+};

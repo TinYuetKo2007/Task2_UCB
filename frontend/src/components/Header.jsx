@@ -3,12 +3,12 @@ import { useState, useEffect } from "react";
 import { searchPages } from "../main.jsx";
 import SearchBar from "./SearchBar.jsx";
 function Header () {
-    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
     const navigate = useNavigate();
-    useEffect(() => {setUsername(localStorage.getItem("username"))}, []);
+    useEffect(() => {setEmail(localStorage.getItem("email"))}, []);
     
     const handleLogout = () => {
-        localStorage.removeItem("username");
+        localStorage.removeItem("email");
         localStorage.removeItem("token");
         navigate("/login");
     }
@@ -39,7 +39,7 @@ function Header () {
         placeholder="Search pages..."
       />
             </div>
-                {username ? <div>
+                {email ? <div>
                 <Link to={"/profile"}>Profile</Link>
                 <button onClick={toggleTheme} className="theme-toggle">
         {isDarkMode ? "Light Mode" : "Dark Mode"}

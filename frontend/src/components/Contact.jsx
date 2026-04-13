@@ -20,7 +20,7 @@ function Contact() {
                 setText("");
                 setEmail("");
             }
-        } catch (err) {
+        } catch {
             setStatus("Failed to send message.");
         }
     };
