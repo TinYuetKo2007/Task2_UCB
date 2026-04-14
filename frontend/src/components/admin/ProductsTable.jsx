@@ -38,11 +38,12 @@ export default function ProductsTable() {
   }, []);
 
   return (
-    <table>
+    <div style={{ width: "100%", overflowX: "auto" }}>
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
         <tr>
           <th>Product Name</th>
-          <th>Price</th>
+          <th>Price (£)</th>
           <th>Product Description</th>
         </tr>
       </thead>
@@ -57,5 +58,6 @@ export default function ProductsTable() {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }

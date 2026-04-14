@@ -33,6 +33,7 @@ export default function UsersTable() {
   if (err) return <h1>{err}</h1>;
 
   return (
+    <div style={{ width: "100%", overflowX: "auto" }}>
     <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
         <tr>
@@ -50,5 +51,6 @@ export default function UsersTable() {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }

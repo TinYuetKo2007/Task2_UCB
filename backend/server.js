@@ -62,10 +62,8 @@ app.post("/signup", async (req, res) => {
                   });
               }
 
-              // 🔥 NEW: get inserted user id
               const userId = this.lastID;
 
-              // 🔥 create token
               const token = jwt.sign(
                   {
                       email,
@@ -333,8 +331,7 @@ app.post("/sync-stripe-products", verify, async (req, res) => {
   }
 
   try {
-
-    console.log("Syncing Stripe catalog...");
+    console.log(`Sync started by user ${req.user.id} (${req.user.role})`);
 
     const productsRes = await stripe.products.list({
       limit: 100,
@@ -352,10 +349,33 @@ app.post("/sync-stripe-products", verify, async (req, res) => {
       }
     }
 
+    let syncedCount = 0;
+
     for (const product of productsRes.data) {
 
       const price = priceMap[product.id];
       if (!price) continue;
+
+      if (
+        req.user.role === "PRODUCER" &&
+        product.metadata?.producerId !== String(req.user.id)
+      ) {
+        continue;
+      }
+
+      const allowedCategories = ["Fruit", "Veg", "Dairy", "Meat", "Other"];
+      const category = allowedCategories.includes(product.metadata?.category)
+        ? product.metadata.category
+        : "Other";
+
+      const title = (product.name || "").substring(0, 255);
+      const description = (product.description || "").substring(0, 1000);
+      const image = product.images?.[0] || "";
+
+      const producerId =
+        req.user.role === "ADMIN"
+          ? (product.metadata?.producerId || null)
+          : req.user.id;
 
       await execute(
         appDB,
@@ -363,22 +383,26 @@ app.post("/sync-stripe-products", verify, async (req, res) => {
         (title, description, price, priceId, productId, image, category, stock, producerId)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          product.name,
-          product.description || "",
+          title,
+          description,
           price.unit_amount / 100,
           price.id,
           product.id,
-          product.images?.[0] || "",
-          product.metadata?.category || "General",
+          image,
+          category,
           0,
-          req.user.id
+          producerId
         ]
       );
+      syncedCount++;
     }
 
-    console.log("Stripe sync completed");
+    console.log(`Sync completed: ${syncedCount} products added`);
 
-    res.json({ success: true });
+    res.json({
+      success: true,
+      message: `Synced ${syncedCount} products`
+    });
 
   } catch (err) {
     console.error("SYNC ERROR:", err);
@@ -747,8 +771,8 @@ app.get("/users", verify, async (req, res) => {
     if (req.user.role !== "ADMIN") {
       return res.json({success: false})
     }
-  const users = await fetchAll(appDB, `SELECT email, role FROM users`)
-  return res.json({users}) // Returns reports to user
+  const users = await fetchAll(appDB, `SELECT id, email, role FROM users`)
+  return res.json({users})
 })
 
 app.get("/contact-messages", verify, async (req, res) => {
@@ -1202,7 +1226,7 @@ app.put("/producerApplications/:id/deny", verify, async (req, res) => {
 app.get("/reports", verify, async (req, res) => {
   const userid = req.user.id;
   const reports = await fetchAll(appDB, `SELECT * FROM reports WHERE id = ?`, [userid])
-  return res.json({reports}) // Returns reports to user
+  return res.json({reports})
 });
 
 app.post("/reports", verify, async (req, res) => {

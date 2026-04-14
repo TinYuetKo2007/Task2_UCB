@@ -188,11 +188,12 @@ const fetchData = useCallback(async () => {
           ? "Edit My Products"
           : `Edit ${type}`}
       </h1>
+      <div style={{ width: "100%", overflowX: "auto" }}>
       <table>
         <thead>
           <tr>
             {type === "users" ? (
-                <><th>Email</th><th>Balance</th><th>Action</th></>
+                <><th>Email</th><th>Role</th><th>Action</th></>
               ) : type === "contact-messages" ? (
                 <><th>Email</th><th>Message</th><th>Date</th><th>Action</th></>
               ) : type === "producerApplications" ? (
@@ -223,8 +224,8 @@ const fetchData = useCallback(async () => {
 
                 <td>
                   <input
-                    name="balance"
-                    value={editForm.balance}
+                    name="role"
+                    value={editForm.role}
                     onChange={handleChange}
                   />
                 </td>
@@ -302,7 +303,7 @@ const fetchData = useCallback(async () => {
             type === "users" ? (
               <>
                 <td>{item.email}</td>
-                <td>£{item.balance}</td>
+                <td>{item.role}</td>
               </>
             )
 
@@ -366,6 +367,7 @@ const fetchData = useCallback(async () => {
     </tbody>
 
       </table>
+      </div>
       <dialog id="confirmDialog" className="custom-modal">
         <div className="modal-content">
           <h3>Are you sure you want to delete?</h3>

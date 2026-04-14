@@ -5,6 +5,7 @@ import axios from "axios";
 import farm_food from "../image/farm_food.jpg";
 
 export default function Basket() {
+  const [alert, setAlert] = useState(null);
   const navigate = useNavigate();
   const { basket, removeFromBasket, clearBasket } = useBasket();
   const [deliveryMethod, setDeliveryMethod] = useState("collection");
@@ -15,18 +16,18 @@ export default function Basket() {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        alert("Please login first");
+        setAlert("Please login first");
         navigate("/login");
         return;
       }
 
       if (!basket || basket.length === 0) {
-        alert("Basket is empty");
+        setAlert("Basket is empty");
         return;
       }
 
       if (deliveryMethod === "delivery" && !address) {
-        alert("Enter delivery address");
+        setAlert("Enter delivery address");
         return;
       }
 
@@ -75,7 +76,9 @@ export default function Basket() {
         <div className="basket-actions">
           <button onClick={() => navigate("/products")}>Back</button>
         </div>
+        <div className="alert-section">
         <h2>Your basket is empty</h2>
+        </div>
       </div></div>
     );
 

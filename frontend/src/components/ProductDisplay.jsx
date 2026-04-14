@@ -58,8 +58,8 @@ export default function ProductDisplay({ product }) {
   };
 
   return (
-    <div className="container">
-      <div className="form-container">
+    <div className="product-container">
+      <div className="product-card">
         <img
           src={product.image || default_image}
           alt={product.title}
@@ -69,7 +69,7 @@ export default function ProductDisplay({ product }) {
         <p>{product.description}</p>
         <h2>£{product.price}</h2>
 
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div className="product-actions">
           <button onClick={handleBuyNow}>Buy Now</button>
           <button type="button" onClick={handleAddToBasket}>Add to Basket</button>
         </div>

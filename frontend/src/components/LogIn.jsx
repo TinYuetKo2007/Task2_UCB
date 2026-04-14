@@ -31,7 +31,7 @@ export default function Login() {
   };
 
     return (
-        <div className="container" style={{ height: "100vh"}}>
+        <div className="auth-container">
             <div className="form-container">
               <button onClick= {() => navigate("/")}>Go Back</button>
                     <form className="form" onSubmit={handleLogin}>

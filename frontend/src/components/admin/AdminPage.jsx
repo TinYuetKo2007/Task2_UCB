@@ -43,7 +43,7 @@ export default function AdminPage() {
       }
 
       setLoading(false);
-    } catch (e) {
+    } catch {
       setErr("Failed to load admin data");
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export default function AdminPage() {
       });
 
       alert("Stripe products synced");
-    } catch (err) {
+    } catch {
       alert("Sync failed");
     }
   };

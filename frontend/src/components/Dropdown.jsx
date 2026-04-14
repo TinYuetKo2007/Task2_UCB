@@ -7,17 +7,29 @@ export default function Dropdown ({ options, title = "Select an Option" }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const dropdownRef = useRef(null);
 
-  // Toggle menu visibility
   const toggleDropdown = () => setIsOpen(!isOpen);
 
-  // Handle option selection
   const handleOptionClick = (option) => {
     setSelectedOption(option.label);
     setIsOpen(false);
-    navigate(option.path);
+  
+    if (option.action === "theme") {
+      toggleTheme();
+      return;
+    }
+  
+    if (option.path === "#logout") {
+      localStorage.removeItem("email");
+      localStorage.removeItem("token");
+      navigate("/login");
+      return;
+    }
+  
+    if (option?.path) {
+      navigate(option.path);
+    }
   };
 
-  // Close menu when clicking outside the component
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {

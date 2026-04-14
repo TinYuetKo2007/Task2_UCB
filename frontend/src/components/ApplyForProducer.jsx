@@ -13,7 +13,7 @@ export default function ApplyForProducer() {
 
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState(null);
+  const [err, _] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");

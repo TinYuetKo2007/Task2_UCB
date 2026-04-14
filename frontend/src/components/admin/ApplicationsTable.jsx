@@ -39,7 +39,14 @@ export default function ApplicationsTable() {
       if (err) return <h1>{err}</h1>;
 
     return (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div style={{ width: "100%", overflowX: "auto" }}>
+        <table 
+      style={{ 
+        width: "1400px",
+        minWidth: "1200px",
+        borderCollapse: "collapse"
+      }}
+    >
       <thead>
         <tr>
           <th>Email</th>
@@ -78,6 +85,6 @@ export default function ApplicationsTable() {
           </tr>
         ))}
       </tbody>
-    </table>
+    </table></div>
     );
 }
