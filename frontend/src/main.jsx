@@ -23,6 +23,7 @@ import ResetPassword from './components/ResetPassword.jsx'
 import ApplyForProducer from './components/ApplyForProducer.jsx'
 import PurchaseSuccess from './components/PurchaseSuccess.jsx'
 import ProducerPage from './components/producer/ProducerPage.jsx'
+import NotFound from './components/NotFound.jsx'
 
 // Links
 export const routeConfig = [
@@ -65,6 +66,10 @@ export const routeConfig = [
           { index: true, element: <Products />, name: "Products" },
           { path: ":productId", element: <ProductPage /> }
         ]
+      },
+      {
+        path: "*",
+        element: <NotFound />
       }
     ]
   }

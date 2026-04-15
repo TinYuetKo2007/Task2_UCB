@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 
 import ProductsTable from "../admin/ProductsTable";
 import MessagesTable from "../admin/MessagesTable";
+import OrdersTable from "../admin/OrdersTable";
 
 import farm_food from "../../image/farm_food.jpg";
 import default_image from "../../image/default_image.png";
@@ -110,12 +111,20 @@ export default function ProducerPage() {
           <div className="admin-section">
             <div className="admin-header">
               <h3>Customer Messages</h3>
-              <button onClick={() => navigate("/producer/edit/contact-messages")}>
+            </div>
+
+            <MessagesTable type="producer" />
+          </div>
+
+          <div className="admin-section">
+            <div className="admin-header">
+              <h3>Customer Orders</h3>
+              <button onClick={() => navigate("/producer/edit/orders")}>
                 Edit
               </button>
             </div>
 
-            <MessagesTable type="producer" />
+            <OrdersTable />
           </div>
 
         </div>

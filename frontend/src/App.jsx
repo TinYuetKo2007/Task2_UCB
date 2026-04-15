@@ -2,7 +2,11 @@ import './App.css'
 const API = "http://localhost:5173";
 import veggie_field from "./image/veggie_field.jpg"
 
-function App() {
+import login from "./image/login.png"
+import healthy_food from "./image/healthy_food.png"
+import delivery from "./image/delivery.png"
+
+export default function App() {
   const email = localStorage.getItem("email")
   console.log("email", email)
 
@@ -33,8 +37,27 @@ function App() {
     </ul>
     </div>
     <div className="second-section">
-      <h1>What Our Customers Say</h1>
+      <h2>Here's three easy steps to start supporting local producers like us:</h2>
+      <ol>
+        <li className="step">
+          <img src={login} />
+          <span>Create an account or log in to your profile</span>
+        </li>
 
+        <li className="step">
+          <img src={healthy_food} />
+          <span>Browse fresh locally produced food from nearby farms</span>
+        </li>
+
+        <li className="step">
+          <img src={delivery} />
+          <span>Place your order for collection or home delivery</span>
+        </li>
+      </ol>
+    </div>
+
+    <h1>What Our Customers Say</h1>
+      <div className="testimonial-section">
       <div className="testimonial-card">
         <p className="testimonial-text">
           "The food quality is amazing and delivery is always fast. I highly recommend this service!"
@@ -45,11 +68,18 @@ function App() {
           <span className="author-role">Verified Customer</span>
         </div>
       </div>
+      <div className="testimonial-card">
+        <p className="testimonial-text">
+        “The service was excellent from start to finish. My order arrived quickly and everything tasted fresh and delicious. I’ll definitely be ordering again!”
+        </p>
+
+        <div className="testimonial-author">
+          <span className="author-name">Emily Johnson</span>
+          <span className="author-role">Verified Customer</span>
+        </div>
+      </div>
     </div>
     
     </div>
   )
 };
-
-
-export default App;

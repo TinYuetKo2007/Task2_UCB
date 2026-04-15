@@ -96,6 +96,8 @@ appDB.serialize(() => {
       productId TEXT,
       quantity INTEGER,
       price REAL,
+      title TEXT,
+      image TEXT,
       FOREIGN KEY (orderId) REFERENCES orders(id),
       FOREIGN KEY (productId) REFERENCES products(productId)
     )

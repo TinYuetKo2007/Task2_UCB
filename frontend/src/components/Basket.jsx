@@ -149,9 +149,15 @@ export default function Basket() {
 
         {deliveryMethod === "delivery" && (
           <div className="delivery-address">
+            <p>Make sure to include both: </p>
+            <ul>
+              <li>Address</li>
+              <li>Postcode</li>
+            </ul>
+            <p>Otherwise we won't be able to deliver it to you.</p>
             <input
               type="text"
-              placeholder="Enter delivery address"
+              placeholder="Enter delivery address and postcode."
               value={address}
               onChange={(e) => setAddress(e.target.value)}
             />

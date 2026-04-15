@@ -32,7 +32,7 @@ export default function ProductDisplay({ product }) {
           "http://localhost:4000/create-checkout-session",
           {
             basket: singleBasket,
-            address: "collection",
+            address: "N/A",
             deliveryMethod: "collection"
           },
           {
@@ -66,6 +66,9 @@ export default function ProductDisplay({ product }) {
           onError={(e) => { e.target.src = default_image; }}
         />
         <h1>{product.title}</h1>
+        <p className="producer-name">
+          by {product.producerName || "Unknown producer"}
+        </p>
         <p>{product.description}</p>
         <h2>£{product.price}</h2>
 

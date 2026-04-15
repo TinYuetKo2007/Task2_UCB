@@ -116,7 +116,7 @@ app.post("/login", (req, res) => {
   });
 
 
-  app.post("/create-checkout-session", verify, async (req, res) => {
+app.post("/create-checkout-session", verify, async (req, res) => {
     try {
       const { basket, address, deliveryMethod } = req.body;
   
@@ -175,7 +175,7 @@ app.post("/login", (req, res) => {
       console.error("CREATE CHECKOUT ERROR:", err);
       res.status(500).json({ error: err.message });
     }
-  });
+});
 
 app.post("/contact-messages", async (req, res) => {
   const { email, text } = req.body;
@@ -573,7 +573,13 @@ app.get("/products", optionalVerify, async (req, res) => {
       case "PRODUCER":
         products = await fetchAll(
           appDB,
-          `SELECT * FROM products
+          `SELECT 
+            p.*, 
+            pa.producerName
+          FROM products p
+          LEFT JOIN producerApplications pa 
+            ON p.producerId = pa.userId
+            AND pa.status = 'APPROVED'
            WHERE producerId = ?
            AND title != 'Delivery Fee'`,
           [req.user.id]
@@ -583,7 +589,13 @@ app.get("/products", optionalVerify, async (req, res) => {
       case "ADMIN":
         products = await fetchAll(
           appDB,
-          `SELECT * FROM products
+          `SELECT 
+            p.*, 
+            pa.producerName
+          FROM products p
+          LEFT JOIN producerApplications pa 
+            ON p.producerId = pa.userId
+            AND pa.status = 'APPROVED'
            WHERE title != 'Delivery Fee'`
         );
         break;
@@ -592,7 +604,13 @@ app.get("/products", optionalVerify, async (req, res) => {
       case "GUEST":
         products = await fetchAll(
           appDB,
-          `SELECT * FROM products
+          `SELECT 
+            p.*, 
+            pa.producerName
+          FROM products p
+          LEFT JOIN producerApplications pa 
+            ON p.producerId = pa.userId
+            AND pa.status = 'APPROVED'
            WHERE title != 'Delivery Fee'
            AND stock > 0`
         );
@@ -696,6 +714,99 @@ app.get("/me/orders", verify, async (req, res) => {
   }
 });
 
+app.get("/producer/orders", verify, async (req, res) => {
+  try {
+
+    if (req.user.role !== "PRODUCER" && req.user.role !== "ADMIN") {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const rows = await fetchAll(
+      appDB,
+      `
+      SELECT 
+        orders.id as orderId,
+        orders.createdAt,
+        orders.status,
+        orders.deliveryMethod,
+        orders.address,
+
+        orderProducts.productId,
+        orderProducts.title,
+        orderProducts.image,
+        orderProducts.quantity,
+        orderProducts.price
+
+      FROM orderProducts
+      JOIN orders 
+        ON orders.id = orderProducts.orderId
+
+      ORDER BY orders.createdAt DESC
+      `
+    );
+
+    const producerProducts = await fetchAll(
+      appDB,
+      "SELECT productId FROM products WHERE producerId = ?",
+      [req.user.id]
+    );
+    
+    const producerProductIds = producerProducts.map(p => p.productId);
+    
+    const filtered = rows.filter(order =>
+      order.productId && producerProductIds.includes(order.productId)
+    );
+
+    console.log("Filtered orders:", filtered);
+    console.log("ALL ORDERS:", rows);
+    console.log("PRODUCER PRODUCTS:", producerProductIds);
+    
+    res.json(filtered);
+
+  } catch (err) {
+    console.error("PRODUCER ORDERS ERROR:", err);
+    res.status(500).json({ error: "Failed to fetch producer orders" });
+  }
+});
+
+app.get("/orders", verify, async (req, res) => {
+  try {
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const rows = await fetchAll(
+      appDB,
+      `
+      SELECT 
+        orders.id as orderId,
+        orders.createdAt,
+        orders.status,
+        orders.deliveryMethod,
+        orders.address,
+
+        orderProducts.productId,
+        orderProducts.title,
+        orderProducts.image,
+        orderProducts.quantity,
+        orderProducts.price
+
+      FROM orderProducts
+      JOIN orders 
+        ON orders.id = orderProducts.orderId
+
+      ORDER BY orders.createdAt DESC
+      `
+    );
+
+    res.json(rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
 app.post("/orders/store", verify, async (req, res) => {
   try {
     const { sessionId } = req.body;
@@ -706,13 +817,22 @@ app.post("/orders/store", verify, async (req, res) => {
       return res.status(400).json({ error: "Invalid session" });
     }
 
+    const deliveryMethod = session.metadata?.deliveryMethod || "collection";
+    let address = session.metadata?.address || null;
+
+    if (deliveryMethod === "collection") {
+      address = "N/A";
+    }
+
     const lineItems = await stripe.checkout.sessions.listLineItems(sessionId);
 
     const order = await execute(
       appDB,
-      `INSERT INTO orders (userId, total, status)
-       VALUES (?, ?, ?)`,
-      [req.user.id, session.amount_total / 100, "paid"]
+      `INSERT INTO orders (userId, total, status, deliveryMethod, address)
+      VALUES (?, ?, ?, ?, ?)`,
+      [req.user.id, session.amount_total / 100, "paid",
+        deliveryMethod,
+        address]
     );
 
     const orderId = order.lastID;

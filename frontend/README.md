@@ -1,21 +1,103 @@
-# React + Vite
+# Greenfield Local Hub (GLH)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Greenfield Local Hub provides a digital platform designed to support local farmers and food producers by connecting them directly with customers.
 
-Currently, two official plugins are available:
+This solution provides a centralised online hub where users can explore locally produced food and drink, learn about producers, and place orders for collection or delivery.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Overview
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Greenfield Local Hub aims to:
 
-## Expanding the ESLint configuration
+* Support local producers through collective marketing
+* Promote transparency in food sourcing and pricing
+* Encourage sustainable, local purchasing
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
 
+## Features
+
+### Customer Features
+
+* Browse locally produced food and drink
+* View detailed product information, pricing, and availability
+* Learn about producers and their methods
+* Place orders for collection or delivery
+* Manage user accounts
+* View order history
+
+### Producer Features
+
+* Manage product listings
+* Update stock levels
+* View and manage incoming orders
+* Maintain product traceability
+
+### Admin / System Features
+
+* Order management system (no delivery tracking or scheduling)
+* Product and stock control
+* Centralised product catalogue
+
+---
+
+## Accessibility
+
+The platform includes accessibility features to support a wide range of users, ensuring an inclusive experience.
+
+---
+
+## Tech Stack
+
+* Frontend: React + Vite
+* Backend: Node.js + Express
+* Database: SQLite
+* Payments: Stripe (if implemented)
+
+---
+
+## Getting Started
+
+### Install dependencies
+```bash
 npm install
+```
+
+### Initial setup
+```bash
 npm run setup
+```
+
+### Seed database
+```bash
 npm run seed
-npm start
+```
+
+### Run the application (make sure to run simultaneously on backend)
+```bash
+npm run dev
+```
+
+---
+
+## Core Functionality
+
+* Product management and stock control
+* Order processing system
+* Producer dashboard
+* Customer account system
+* Loyalty scheme integration
+
+---
+
+## Notes
+
+* This system does not include delivery tracking or scheduling features.
+* Designed to prioritise simplicity, transparency, and usability.
+
+---
+
+## Purpose
+
+This project was developed to demonstrate a full-stack solution for supporting local food ecosystems through digital technology.

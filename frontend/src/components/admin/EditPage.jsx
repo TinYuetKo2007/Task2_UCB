@@ -57,46 +57,37 @@ export default function EditPage() {
       }
     };
 
-const fetchData = useCallback(async () => {
-  try {
-    console.log("Fetching:", type);
-
-    const res = await fetch(`http://localhost:4000/${type}`, {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token"),
-      },
-    });
-
-    if (!res.ok) {
-      console.log("Route error:", res.status);
-      setData([]);
-      return;
-    }
-
-    const result = await res.json();
-    console.log("API RESULT:", result);
-
-    // if backend returns array
-    if (Array.isArray(result)) {
-      setData(result);
-      return;
-    }
-
-    // if backend returns object
-    setData(
-      result.users ||
-      result.products ||
-      result.messages ||
-      result.applications ||
-      result.data ||
-      []
-    );
-
-  } catch (error) {
-    console.error("Fetch data error:", error);
-    setData([]);
-  }
-}, [type]);
+    const fetchData = useCallback(async () => {
+      if (!user) return;
+    
+      try {
+        console.log("Fetching:", type);
+    
+        let endpoint = `http://localhost:4000/${type}`;
+    
+        if (type === "orders" && user.role === "PRODUCER") {
+          endpoint = "http://localhost:4000/producer/orders";
+        }
+    
+        const res = await fetch(endpoint, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+        });
+    
+        if (!res.ok) {
+          setData([]);
+          return;
+        }
+    
+        const result = await res.json();
+    
+        setData(Array.isArray(result) ? result : []);
+      } catch (error) {
+        console.error(error);
+        setData([]);
+      }
+    }, [type, user]);
 
   useEffect(() => {
     fetchUser();
@@ -104,9 +95,9 @@ const fetchData = useCallback(async () => {
 
   useEffect(() => {
     if (
-  user?.role === "ADMIN" ||
-  (user?.role === "PRODUCER" && type === "products")
-) {
+      user?.role === "ADMIN" ||
+      (user?.role === "PRODUCER" && (type === "products" || type === "orders" || type === "contact-messages"))
+    ) {
       fetchData();
     }
   }, [fetchData, user, type]);
@@ -151,7 +142,7 @@ const fetchData = useCallback(async () => {
     if (err) return <h1>{err}</h1>;
     if (!user) return <h1>Access denied.</h1>;
     
-    if (user.role === "PRODUCER" && type !== "products") {
+    if (user.role === "PRODUCER" && type !== "products" && type !== "orders") {
       return <h1>Access denied.</h1>;
     }
     
@@ -200,6 +191,18 @@ const fetchData = useCallback(async () => {
                   <>
                     <th>Email</th><th>Producer Name</th><th>Address</th>
                     <th>Description</th><th>Status</th><th>Action</th>
+                  </>
+                ) : type === "orders" ? (
+                  <>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Delivery</th>
+                    <th>Address</th>
+                    <th>Product</th>
+                    <th>Image</th>
+                    <th>Qty</th>
+                    <th>Price (£)</th>
                   </>
                 ) : (
                 <><th>Product</th><th>Price</th><th>Stock</th><th>Description</th><th>Action</th></>
@@ -325,7 +328,38 @@ const fetchData = useCallback(async () => {
               </>
             )
 
-            : (
+            : type === "orders" ? (
+              <>
+                <td>{item.orderId}</td>
+                <td>{new Date(item.createdAt).toLocaleString()}</td>
+                <td>{item.status}</td>
+                <td>{item.deliveryMethod || "—"}</td>
+                <td>{item.address || "—"}</td>
+                <td>{item.title || "—"}</td>
+            
+                <td>
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt="product"
+                      style={{ width: "60px", height: "60px", objectFit: "cover" }}
+                      onError={(e) => {
+                        e.currentTarget.src = "/default_image.png";
+                      }}
+                    />
+                  ) : (
+                    "No image"
+                  )}
+                </td>
+            
+                <td>{item.quantity}</td>
+                <td>
+                  {typeof item.price === "number"
+                    ? `£${item.price}`
+                    : "Invalid"}
+                </td>
+              </>
+            ) : (
               <>
                 <td>{item.title}</td>
                 <td>£{item.price}</td>
@@ -353,6 +387,8 @@ const fetchData = useCallback(async () => {
                   Reject
                 </button>
               </>
+            ) : type === "orders" ? (
+              <span>View only</span>
             ) : (
               <>
                 <button onClick={() => startEdit(item)}>Edit</button>

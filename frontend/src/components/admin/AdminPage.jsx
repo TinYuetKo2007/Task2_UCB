@@ -5,6 +5,7 @@ import UsersTable from "./UsersTable";
 import ProductsTable from "./ProductsTable";
 import MessagesTable from "./MessagesTable";
 import ApplicationsTable from "./ApplicationsTable";
+import OrdersTable from "./OrdersTable";
 
 import farm_food from "../../image/farm_food.jpg";
 import default_image from "../../image/default_image.png";
@@ -137,6 +138,17 @@ export default function AdminPage() {
               <button onClick={() => navigate("/admin/edit/producerApplications")}>Edit</button>
             </div>
             <ApplicationsTable />
+          </div>
+
+          <div className="admin-section">
+            <div className="admin-header">
+              <h3>Customer Orders</h3>
+              <button onClick={() => navigate("/producer/edit/orders")}>
+                Edit
+              </button>
+            </div>
+
+            <OrdersTable />
           </div>
 
         </div>
