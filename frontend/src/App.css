@@ -1154,6 +1154,7 @@ body.dark-mode {
 
   .mobile-menu {
     display: block;
+    width: 100%;
   }
 
   .search-bar {
@@ -1185,8 +1186,21 @@ body.dark-mode {
     display: none !important;
   }
 
-  .dropdown-container,
+  .dropdown-container {
+    width: 100%;
+    max-width: 300px;
+    margin: 10px auto;
+  }
+
   .dropdown-trigger {
+    width: 100%;
+    box-sizing: border-box;
+  }
+    .topnav > div {
+    padding: 0;
+  }
+
+  .dropdown-menu {
     width: 100%;
   }
 

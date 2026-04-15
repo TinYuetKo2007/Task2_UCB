@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
 
-export default function Dropdown ({ options, title = "Select an Option" }) {
+export default function Dropdown ({ options, title = "Select an Option",  onThemeToggle }) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -14,7 +14,7 @@ export default function Dropdown ({ options, title = "Select an Option" }) {
     setIsOpen(false);
   
     if (option.action === "theme") {
-      toggleTheme();
+      onThemeToggle?.();
       return;
     }
   
